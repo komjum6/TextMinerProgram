@@ -1,0 +1,11 @@
+##Versie 1.0 (De 'Justin Maakt een Begin' versie)
+
+### Toegevoegd
+
+>Justin
+- Changelog.txt
+- TextMiner.py
+- ReadMe.md
+----------------
+
+##Versie 
