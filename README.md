@@ -1,0 +1,2 @@
+# TextMinerProgram
+A TextMiner
