@@ -1,4 +1,4 @@
-##Versie 1.0 (De 'Justin Maakt een Begin' versie)
+##Versie 0.1 (De 'Justin Maakt een Begin' versie)
 
 ### Toegevoegd
 
@@ -8,7 +8,7 @@
 - ReadMe.md
 ----------------
 
-##Versie 1.1 (De 'Eindelijk doen de links het' versie)
+##Versie 0.11 (De 'Eindelijk doen de links het' versie)
 
 ### Toegevoegd
 
