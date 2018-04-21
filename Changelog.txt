@@ -8,4 +8,20 @@
 - ReadMe.md
 ----------------
 
-##Versie 
+##Versie 1.1 (De 'Eindelijk doen de links het' versie)
+
+### Toegevoegd
+
+>Justin
+- static
+- static/Images/LogoTextMiner.png
+- static/Stylesheets/style.css
+- templates
+- .html's: home, inputFile, layout, notes, about, visualisations, page_not_found
+----------------
+
+### Gewijzigd
+
+>Justin
+-TextMiner.py
+//Dit bestand functioneert nu beter
