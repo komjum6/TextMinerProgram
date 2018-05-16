@@ -25,3 +25,12 @@
 >Justin
 -TextMiner.py
 //Dit bestand functioneert nu beter
+
+----------------
+##Versie 0.13 (De 'even een update' versie)
+
+### Gewijzigd
+
+>Justin
+-Alles
+//Even een update

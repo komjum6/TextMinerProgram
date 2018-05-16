@@ -17,7 +17,6 @@
         <div id="nav">
             <ul>
                 <li><a {% if active_page == 'Home Page' %}class="active"{% endif %} href="{{ url_for('index') }}">Home Page</a></li>
-                <li><a {% if active_page == 'Input' %}class="active"{% endif %} href="{{ url_for('inputFile') }}">Input</a></li>
                 <li><a {% if active_page == 'Visualisations' %}class="active"{% endif %} href="{{ url_for('visualisations') }}">Visualisations</a></li>
                 <li><a {% if active_page == 'Notes' %}class="active"{% endif %} href="{{ url_for('notes') }}">Notes</a></li>
                 <li><a {% if active_page == 'About' %}class="active"{% endif %} href="{{ url_for('about') }}">About</a></li>
