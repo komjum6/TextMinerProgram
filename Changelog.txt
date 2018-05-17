@@ -34,3 +34,10 @@
 >Justin
 -Alles
 //Even een update
+
+##Versie 0.14 (De "Is dit perse nodig" versie)
+
+### Gewijzigd
+
+>Huub
+-Templates/statics
