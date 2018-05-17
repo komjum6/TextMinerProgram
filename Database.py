@@ -21,6 +21,3 @@ def get_conn():
 
 
 def insert_pubmed(pmid,titel,publisch_year):
-    
-    
-    
