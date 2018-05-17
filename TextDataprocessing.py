@@ -24,6 +24,7 @@ Conclusion
 Our results demonstrated the ability of BG-4, a novel peptide from the seed of bitter melon, to exert anti-inflammatory action. This could explain the traditional use of bitter melon against diseases associated with aberrant and uncontrolled inflammation."""
 
 import nltk
+from pubmedRetrieval import search, fetch_details
 
 def preprocess(document = document):
     sentences = nltk.sent_tokenize(document)
@@ -37,48 +38,15 @@ def grammarize(sentence):
     result = cp.parse(sentence)
     return result
 
-def get_ids(term = 'Momordica+charantia'):
-    from selenium import webdriver
-    from bs4 import BeautifulSoup
-    from selenium.common.exceptions import NoSuchElementException
-
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument("headless")
-    browser = webdriver.Chrome("D:/Bio-Infmap/Data/Periode_8/chromedriver.exe", chrome_options=chrome_options)#Belangrijk om te kijken of dit op iedere computer kan
-    
-    #browser = webdriver.Remote("http://127.0.0.1/wd/hub", webdriver.DesiredCapabilities.HTMLUNIT.copy())
-    
-    #browser = webdriver.Remote("http://localhost:4444/wd/hub", webdriver.DesiredCapabilities.HTMLUNITWITHJS)
-    
-    #from selenium.remote import connect                                                                                                                          
-    #browser = connect('htmlunit')    
-    
-    browser.get('https://www.ncbi.nlm.nih.gov/pubmed/?term={0}&dispmax=200'.format(term))
-
-    soup=BeautifulSoup(browser.page_source, "lxml")
-
-    pubmedIDlijst = []
-
-    page_number = 1
-    while True:
-        try:
-            if page_number == 1:
-                link = browser.find_element_by_xpath('//*[@id="EntrezSystem2.PEntrez.PubMed.Pubmed_ResultsPanel.Pubmed_Pager.Page"]')
-            if page_number > 1:
-                if bool(browser.find_element_by_xpath('//*[@id="maincontent"]/div/div[3]/div[2]/span[1]')) == True:
-                    browser.quit()
-
-        except NoSuchElementException:
-            link = browser.find_element_by_xpath('(//*[@id="EntrezSystem2.PEntrez.PubMed.Pubmed_ResultsPanel.Pubmed_Pager.Page"])[3]')
-        except:
-            pass #Beter dan iets printen zonder dat het nodig is
-            break
-        for dd in soup.findAll("dd", class_=""):
-            pubmedIDlijst.append(str(dd).replace("<dd>","").replace("</dd>",""))
-        try:
-            link.click()
-            page_number += 1
-        except:
-            print(pubmedIDlijst)
-
-        #Maak deze code via een headless browser
+def get_abstracts():
+    results = search('Momordica charantia')
+    id_list = results['IdList']
+    papers = fetch_details(id_list)
+    for i, paper in enumerate(papers):
+        print(str(i) + ":" + paper)
+        
+    #for i, paper in enumerate(papers['PubmedArticle']):
+        #print(str(i) + ":"+ str(paper['MedlineCitation']['KeywordList']))
+        #print(str(i) + ":"+ str(paper['MedlineCitation']['Article']['ArticleDate']))
+        #print(str(i) + ":"+ str(paper['MedlineCitation']['PMID']))
+        #print(str(i) + ":"+ str(paper['MedlineCitation']['Article']['Abstract']['AbstractText']))
