@@ -1,0 +1,26 @@
+{
+  "nodes": [
+    {"id": "Bitter gourd", "group": 1},
+    {"id": "Potato", "group": 1},
+    {"id": "Carrot", "group": 1},
+	
+	{"id": "Diabetic","group":2},
+	{"id": "Obese","group":2},
+	
+	{"id": "Sugar","group":3},
+	{"id": "Fat","group":3}
+    
+  ],
+  "links": [ 
+	{"source": "Bitter gourd", "target": "Sugar","value":1},
+    {"source": "Carrot", "target": "Sugar","value":1},
+	{"source": "Potato", "target": "Sugar","value":1},
+	
+	{"source": "Bitter gourd", "target": "Fat","value":1},
+	
+	{"source": "Sugar", "target": "Diabetic","value":1},
+	{"source": "Sugar", "target": "Obese","value":1},
+	{"source": "Fat", "target": "Obese","value":1}
+		
+  ]
+}

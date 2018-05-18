@@ -1,9 +1,5 @@
 from flask import Flask, render_template, request, flash
-from wtforms import Form, BooleanField, TextAreaField, PasswordField, validators
-from flask_wtf import FlaskForm
 import os
-from FlaskDataprocessing import aminoAcidMap, DNAconversion, upload_file
-#from flask_frozen import Freezer
 
 app = Flask(__name__)
 
@@ -32,11 +28,5 @@ def about():
 def page_not_found(error):
     return render_template('page_not_found.html'), 404
 
-import webbrowser
-
-#Ga naar de plaats waar de webpagina geopend wordt
-url = 'http://127.0.0.1:5000/'
-webbrowser.open(url)
-
-if __name__ == "__main__":
-    app.run(debug=False)
+if __name__ == '__main__':
+    app.run(debug=True)
