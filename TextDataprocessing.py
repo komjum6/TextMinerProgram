@@ -24,7 +24,7 @@ Conclusion
 Our results demonstrated the ability of BG-4, a novel peptide from the seed of bitter melon, to exert anti-inflammatory action. This could explain the traditional use of bitter melon against diseases associated with aberrant and uncontrolled inflammation."""
 
 import nltk
-from pubmedRetrieval import search, fetch_details
+from pubmedRetrieval import search, fetch_details, get_PMID, get_abstract
 
 def preprocess(document = document):
     sentences = nltk.sent_tokenize(document)
@@ -45,10 +45,12 @@ def get_abstracts():
    
     
         
-    for i, paper in enumerate(papers['PubmedArticleSet']):
-        #print(str(i) + ":"+ str(paper['MedlineCitation']['KeywordList']))
-        #print(str(i) + ":"+ str(paper['MedlineCitation']['Article']['ArticleDate']))
-        #print(str(i) + ":"+ str(paper['MedlineCitation']['PMID']))
-        print(str(i) + ":"+ str(paper['MedlineCitation']['Article']['Abstract']['AbstractText']))
+    for i, paper in enumerate(papers['PubmedArticle']):
+        try:
+            print(str(i) + " : " + get_PMID(paper))
+            print()
+            print(str(i) + " : " + get_abstract(paper))
+        except KeyError:
+            print("\n\nIGNORE \n\n")
 
 get_abstracts()
