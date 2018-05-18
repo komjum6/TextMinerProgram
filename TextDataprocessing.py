@@ -72,3 +72,5 @@ def get_abstracts():
             pass
     
     return paper_object_list
+
+print(get_abstracts())
