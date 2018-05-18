@@ -42,11 +42,13 @@ def get_abstracts():
     results = search('Momordica charantia')
     id_list = results['IdList']
     papers = fetch_details(id_list)
-    for i, paper in enumerate(papers):
-        print(str(i) + ":" + paper)
+   
+    
         
-    #for i, paper in enumerate(papers['PubmedArticle']):
+    for i, paper in enumerate(papers['PubmedArticleSet']):
         #print(str(i) + ":"+ str(paper['MedlineCitation']['KeywordList']))
         #print(str(i) + ":"+ str(paper['MedlineCitation']['Article']['ArticleDate']))
         #print(str(i) + ":"+ str(paper['MedlineCitation']['PMID']))
-        #print(str(i) + ":"+ str(paper['MedlineCitation']['Article']['Abstract']['AbstractText']))
+        print(str(i) + ":"+ str(paper['MedlineCitation']['Article']['Abstract']['AbstractText']))
+
+get_abstracts()
