@@ -24,7 +24,7 @@ Conclusion
 Our results demonstrated the ability of BG-4, a novel peptide from the seed of bitter melon, to exert anti-inflammatory action. This could explain the traditional use of bitter melon against diseases associated with aberrant and uncontrolled inflammation."""
 
 import nltk
-from pubmedRetrieval import search, fetch_details, get_PMID, get_abstract
+from pubmedRetrieval import *
 
 def preprocess(document = document):
     sentences = nltk.sent_tokenize(document)
@@ -39,18 +39,36 @@ def grammarize(sentence):
     return result
 
 def get_abstracts():
+    class Publishment:
+        def __init__(self, pubmedID, title, abstract, article_date, keywords):
+            self.pubmedID = pubmedID
+            self.title = title
+            self.abstract = abstract
+            self.article_date = article_date
+            self.keywords = keywords
+    
     results = search('Momordica charantia')
     id_list = results['IdList']
     papers = fetch_details(id_list)
-   
     
-        
+    paper_object_list = []
+       
     for i, paper in enumerate(papers['PubmedArticle']):
         try:
-            print(str(i) + " : " + get_PMID(paper))
-            print()
-            print(str(i) + " : " + get_abstract(paper))
+            #print(str(i) + " : " + get_PMID(paper))
+            #print()
+            #print(str(i) + " : " + get_abstract(paper))
+            
+            #get_PMID(paper)
+            #get_title(paper)
+            #get_abstract(paper)
+            #get_article_date(paper)
+            #get_keywords(paper)
+            paper = Publishment(get_PMID(paper),get_title(paper),get_abstract(paper),get_article_date(paper),get_keywords(paper))
+            paper_object_list.append(paper)
+            
         except KeyError:
-            print("\n\nIGNORE \n\n")
-
-get_abstracts()
+            #print("\n\nIGNORE \n\n")
+            pass
+    
+    return paper_object_list

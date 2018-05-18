@@ -26,6 +26,12 @@ def fetch_details(id_list):
     results = Entrez.read(handle)
     return results
 
+def get_PMID(paper):
+    return str(paper['MedlineCitation']['PMID'])
+
+def get_title(paper):
+    return str(paper['MedlineCitation']['ArticleTitle'])
+
 def get_abstract(paper):
     
     abstract = paper['MedlineCitation']['Article']['Abstract']
@@ -40,26 +46,16 @@ def get_abstract(paper):
             
     return text
 
-def get_PMID(paper):
-    
-    return str(paper['MedlineCitation']['PMID'])
 
 def get_article_date(paper):
-    
     return str(paper['MedlineCitation']['Article']['ArticleDate'])
 
-def get_keyword_list(paper):
-    #return str(paper['MedlineCitation']['KeywordList'])
-
-    keys = paper['MedlineCitation']['KeywordList']
-        
-    text = ""
-    try:
-        key = keys[0]
-        return ' '.join(key)
-    except:
-        pass
+def get_keywords(paper):
     
-    return text
+    keys = paper['MedlineCitation']['KeywordList'] 
 
-    
+    try: 
+        key = keys[0] 
+        return ' '.join(key) 
+    except: 
+        pass 

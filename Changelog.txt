@@ -34,3 +34,10 @@
 >Justin
 -Alles
 //Even een update
+
+##Versie 0.14 (De 'blijkbaar gebruikt niemand deze changelog' versie)
+
+### Gewijzigd
+
+>Justin 
+-Vanalles, deze changelog wordt dus niet meer bijgehouden...
