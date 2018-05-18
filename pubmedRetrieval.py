@@ -49,6 +49,17 @@ def get_article_date(paper):
     return str(paper['MedlineCitation']['Article']['ArticleDate'])
 
 def get_keyword_list(paper):
-    return str(paper['MedlineCitation']['KeywordList'])
+    #return str(paper['MedlineCitation']['KeywordList'])
+
+    keys = paper['MedlineCitation']['KeywordList']
+        
+    text = ""
+    try:
+        key = keys[0]
+        return ' '.join(key)
+    except:
+        pass
+    
+    return text
 
     
