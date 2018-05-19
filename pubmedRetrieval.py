@@ -30,7 +30,7 @@ def get_PMID(paper):
     return str(paper['MedlineCitation']['PMID'])
 
 def get_title(paper):
-    return str(paper['MedlineCitation']['Article']['ArticleTitle'])
+    return str(paper['MedlineCitation']['ArticleTitle'])
 
 def get_abstract(paper):
     

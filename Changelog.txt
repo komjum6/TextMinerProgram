@@ -40,4 +40,16 @@
 ### Gewijzigd
 
 >Justin 
--Vanalles, deze changelog wordt dus niet meer bijgehouden...
+-Vanalles, deze changelog wordt dus niet meer bijgehouden door de anderen...
+
+##Versie 0.15 (De 'Code van Jupyter Notebook naar .py' versie)
+
+### Gewijzigd
+
+>Justin
+-De textverwerking die voorheen in een .ipynb plaatsvond zit nu in TextDataprocessing.py en alle functies zijn op elkaar aangesloten.
+
+### TODO
+
+>Requests van Justin
+-Wanneer de functie init_class() wordt aangeroepen en daarbij dus ook de andere functies komt er geen resultaat tegenover wanneer de .ipynb wordt gebruikt.
