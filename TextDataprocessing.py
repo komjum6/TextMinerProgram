@@ -35,7 +35,7 @@ def init_class():
     
 def fill_data(Publishment):
     results = search('Momordica charantia')
-    id_list = results['IdList'] #kan dit weg?
+    id_list = results['IdList']
     papers = fetch_details(id_list)
     
     paper_object_list = []
@@ -49,14 +49,16 @@ def fill_data(Publishment):
             pass
     
     sentences = [preprocess(str(paper.abstract)) for paper in paper_object_list]
-    nouns = extract_nouns(sentences)
-    list_of_all_dicts = get_frequencies(nouns)
+    nouns_abstract_list = extract_nouns(sentences)
+    list_of_all_dicts = get_frequencies(nouns_abstract_list)
     Frequency_dict_all = list_of_all_dicts[0]
-    for word, frequency in Frequency_dict_all.most_common(len(nouns)):
-        print(u'{};{}'.format(word, frequency))
-    find_compounds(Frequency_dict_all)
+    print(len(Frequency_dict_all))
+    #for word, frequency in Frequency_dict_all.most_common(len(nouns_abstract_list)):
+    #    print(u'{};{}'.format(word, frequency))
+    #chemicals = find_compounds(Frequency_dict_all)
+    #print(chemicals)
 
-def preprocess(document = document):
+def preprocess(document):
     sentences = nltk.sent_tokenize(document)
     sentences = [nltk.word_tokenize(sent) for sent in sentences]
     sentences = [nltk.pos_tag(sent) for sent in sentences]
@@ -68,35 +70,44 @@ def grammarize(sentence):
     result = cp.parse(sentence)
     return result
 
-def extract_nouns(sentences):
-    abstract = list(itertools.chain(*sentences))
-    is_noun = lambda pos: pos[:2] == 'NN' 
-    nouns = [word for (word, pos) in abstract if is_noun(pos)] 
-    return nouns
+def extract_nouns(sentences, nouns_abstract_list = []):
+    abstract_list = list(itertools.chain(*sentences))
+    is_noun = lambda pos: pos[:2] == 'NN'
+    for abstract in abstract_list:
+        nouns = [word for (word, pos) in abstract if is_noun(pos)] #nouns per abstract 
+        nouns_abstract_list.append(nouns)
+    return nouns_abstract_list
 
-def get_frequencies(nouns, list_of_dicts = [], Frequency_dict_all = FreqDist()):
-    new_abstract = ''.join([(i + ' ') for i in nouns])
-    words = nltk.tokenize.word_tokenize(new_abstract)
-    list_of_dicts.append(Frequency_dict_all.most_common(len(nouns)))
-    Frequency_dict_all.update(words)
+def get_frequencies(nouns_abstract_list, list_of_dicts = [], Frequency_dict_all = FreqDist()):
+    for nouns in nouns_abstract_list:
+        new_abstract = ''.join([(i + ' ') for i in nouns])
+        words = nltk.tokenize.word_tokenize(new_abstract)
+        list_of_dicts.append(Frequency_dict_all.most_common(len(nouns)))
+        Frequency_dict_all.update(words)
     return [Frequency_dict_all,list_of_dicts]
 
 def find_compounds(Frequency_dict_all):
     listcompoundobject = []
     chemicals =[]
 
+    #for noun in Frequency_dict_all:
+    #    if noun not in ['melon', 'AND', 'result', 'component', 'for', 'may' , 'male', 'equal', 'control', 'access', 'we', 'side', 'target', 'action'] : #Sorry dat het hardcoded moet, maar ik wil geen chemische verbinding genaamd melon
+    #        results = pch.get_compounds(noun, 'name')
+    #        if results != []:
+    #            chemicals.append(noun)
+    #            listcompoundobject.append(results[0])
+                
     for noun in Frequency_dict_all:
-        if noun not in ['melon', 'AND', 'result', 'component', 'for', 'may' , 'male', 'equal', 'control', 'access', 'we', 'side', 'target', 'action'] : #Sorry dat het hardcoded moet, maar ik wil geen chemische verbinding genaamd melon
-            results = pch.get_compounds(noun, 'name')
-            if results != []:
-                chemicals.append(noun)
-                listcompoundobject.append(results[0])
+        results = pch.get_compounds(noun, 'name')
+        if results != []:
+            chemicals.append(noun)
+            listcompoundobject.append(results[0])
+    return chemicals
+    #print(listcompoundobject)
+    #print('-'*10 + '\n')
 
-    print(listcompoundobject)
-    print('-'*10 + '\n')
+    #for compound in listcompoundobject:
+    #    print(compound.molecular_formula)
+    #    print('-'*5 + '\n' + compound.iupac_name + '\n')
 
-    for compound in listcompoundobject:
-        print(compound.molecular_formula)
-        print('-'*5 + '\n' + compound.iupac_name + '\n')
-
-    print('\n' + str(chemicals))
+    #print('\n' + str(chemicals))

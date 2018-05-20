@@ -53,3 +53,10 @@
 
 >Requests van Justin
 -Wanneer de functie init_class() wordt aangeroepen en daarbij dus ook de andere functies komt er geen resultaat tegenover wanneer de .ipynb wordt gebruikt.
+
+##Versie 0.20 (De '9986 problems' versie)
+
+### Gewijzigd
+
+>Justin 
+-Mijn eigen request afgehandeld, er komt nu resultaat waarvan het eerste deel (frequency dictionary) veelbelovend is. Maar het versturen van requests naar pubchem om te kijken of een woord een chemische verbinding is werkt op kleine schaal, maar niet op grote schaal. Wat ik hiermee bedoel is het volgende: Ik ging van alle woorden in een abstract naar alleen de zelfstandige naamwoorden. Die gaven een match als het in de database van pubchem stond en een lege lijst als dat niet zo was. Maar bij de zoekopdracht 'Momordica charantia' kwam ik 9986 zelfstandige naamwoorden tegen. Daarop wachten lijkt mij niet leuk voor een Bioloog. 
