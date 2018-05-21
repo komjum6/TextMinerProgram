@@ -1,9 +1,3 @@
-#https://stackoverflow.com/questions/4951751/creating-a-new-corpus-with-nltk
-#http://www.nltk.org/book/ch07.html
-#https://blog.algorithmia.com/acquiring-data-for-document-classification/
-#http://d.hatena.ne.jp/tdm/20080228/1204213888
-#https://marcobonzanini.com/2015/01/12/searching-pubmed-with-python/
-
 #Voorbeeld van een artikel over de Bitter Gourd
 
 document = \
@@ -25,8 +19,46 @@ Our results demonstrated the ability of BG-4, a novel peptide from the seed of b
 
 import nltk
 from pubmedRetrieval import *
+import itertools
+from nltk.probability import FreqDist
+import pubchempy as pch
 
-def preprocess(document = document):
+def init_class():
+    class Publishment:
+        def __init__(self, pubmedID, title, abstract, article_date, keywords):
+            self.pubmedID = pubmedID
+            self.title = title
+            self.abstract = abstract
+            self.article_date = article_date
+            self.keywords = keywords        
+    fill_data(Publishment)
+    
+def fill_data(Publishment):
+    results = search('Momordica charantia')
+    id_list = results['IdList']
+    papers = fetch_details(id_list)
+    
+    paper_object_list = []
+       
+    for i, paper in enumerate(papers['PubmedArticle']):
+        try:
+            paper = Publishment(get_PMID(paper),get_title(paper),get_abstract(paper),get_article_date(paper),get_keywords(paper))
+            paper_object_list.append(paper)
+            
+        except KeyError:
+            pass
+    
+    sentences = [preprocess(str(paper.abstract)) for paper in paper_object_list]
+    nouns_abstract_list = extract_nouns(sentences)
+    list_of_all_dicts = get_frequencies(nouns_abstract_list)
+    Frequency_dict_all = list_of_all_dicts[0]
+    print(len(Frequency_dict_all))
+    #for word, frequency in Frequency_dict_all.most_common(len(nouns_abstract_list)):
+    #    print(u'{};{}'.format(word, frequency))
+    #chemicals = find_compounds(Frequency_dict_all)
+    #print(chemicals)
+
+def preprocess(document):
     sentences = nltk.sent_tokenize(document)
     sentences = [nltk.word_tokenize(sent) for sent in sentences]
     sentences = [nltk.pos_tag(sent) for sent in sentences]
@@ -38,39 +70,44 @@ def grammarize(sentence):
     result = cp.parse(sentence)
     return result
 
-def get_abstracts():
-    class Publishment:
-        def __init__(self, pubmedID, title, abstract, article_date, keywords):
-            self.pubmedID = pubmedID
-            self.title = title
-            self.abstract = abstract
-            self.article_date = article_date
-            self.keywords = keywords
-    
-    results = search('Momordica charantia')
-    id_list = results['IdList']
-    papers = fetch_details(id_list)
-    
-    paper_object_list = []
-       
-    for i, paper in enumerate(papers['PubmedArticle']):
-        try:
-            #print(str(i) + " : " + get_PMID(paper))
-            #print()
-            #print(str(i) + " : " + get_abstract(paper))
-            
-            #get_PMID(paper)
-            #get_title(paper)
-            #get_abstract(paper)
-            #get_article_date(paper)
-            #get_keywords(paper)
-            paper = Publishment(get_PMID(paper),get_title(paper),get_abstract(paper),get_article_date(paper),get_keywords(paper))
-            paper_object_list.append(paper)
-            
-        except KeyError:
-            #print("\n\nIGNORE \n\n")
-            pass
-    
-    return paper_object_list
+def extract_nouns(sentences, nouns_abstract_list = []):
+    abstract_list = list(itertools.chain(*sentences))
+    is_noun = lambda pos: pos[:2] == 'NN'
+    for abstract in abstract_list:
+        nouns = [word for (word, pos) in abstract if is_noun(pos)] #nouns per abstract 
+        nouns_abstract_list.append(nouns)
+    return nouns_abstract_list
 
-print(get_abstracts())
+def get_frequencies(nouns_abstract_list, list_of_dicts = [], Frequency_dict_all = FreqDist()):
+    for nouns in nouns_abstract_list:
+        new_abstract = ''.join([(i + ' ') for i in nouns])
+        words = nltk.tokenize.word_tokenize(new_abstract)
+        list_of_dicts.append(Frequency_dict_all.most_common(len(nouns)))
+        Frequency_dict_all.update(words)
+    return [Frequency_dict_all,list_of_dicts]
+
+def find_compounds(Frequency_dict_all):
+    listcompoundobject = []
+    chemicals =[]
+
+    #for noun in Frequency_dict_all:
+    #    if noun not in ['melon', 'AND', 'result', 'component', 'for', 'may' , 'male', 'equal', 'control', 'access', 'we', 'side', 'target', 'action'] : #Sorry dat het hardcoded moet, maar ik wil geen chemische verbinding genaamd melon
+    #        results = pch.get_compounds(noun, 'name')
+    #        if results != []:
+    #            chemicals.append(noun)
+    #            listcompoundobject.append(results[0])
+                
+    for noun in Frequency_dict_all:
+        results = pch.get_compounds(noun, 'name')
+        if results != []:
+            chemicals.append(noun)
+            listcompoundobject.append(results[0])
+    return chemicals
+    #print(listcompoundobject)
+    #print('-'*10 + '\n')
+
+    #for compound in listcompoundobject:
+    #    print(compound.molecular_formula)
+    #    print('-'*5 + '\n' + compound.iupac_name + '\n')
+
+    #print('\n' + str(chemicals))
