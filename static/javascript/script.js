@@ -13,9 +13,9 @@ var simulation = d3.forceSimulation()
     .force("charge", d3.forceManyBody(100))
     .force("center", d3.forceCenter(width / 2, height / 2));
 
-var abs_url = "http://cytosine.nl/~owe7_pg3/realz"
-var rel_url = "/static/javascript/miserables.json"
-var url = abs_url + rel_url
+
+var abs_url = "http://cytosine.nl/~owe8_pg1/Clickme.wsgi/jsonrequesturl"
+var url = abs_url
 
 d3.json(url, function(error, graph) {
   if (error) throw error;

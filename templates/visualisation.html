@@ -15,7 +15,17 @@
 		<meta charset="UTF-8">
 		<!-- Site Title -->
 		<title>Textminer</title>
+		<style>
+		.links line {
+      stroke: #999;
+      stroke-opacity: 0.6;
+    }
 
+    .nodes circle {
+      stroke: #fff;
+      stroke-width: 1.5px;
+        }
+        </style>
 		<link href="https://fonts.googleapis.com/css?family=Poppins:100,200,400,300,500,600,700" rel="stylesheet"> 
 		
 		
@@ -68,7 +78,12 @@
 						<div class="col-md-12 pb-40 header-text text-center">
 							<h1 class="pb-10">Here the node graph</h1>
 							<p>
-								
+								<svg width="960" height="600"></svg>
+
+	
+                        	<script src="https://d3js.org/d3.v4.min.js"></script>
+                        	<script type="text/javascript" src="{{ url_for('static', filename='javascript/script.js') }}"></script>
+                        	<script> litteShit(); </script>
 							</p>		
 						</div>
 				</div>	

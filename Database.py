@@ -14,7 +14,7 @@ def get_conn():
     
     cnx = mysql.connector.connect(user='owe8_pg1', password='blaat1234',
                               host='127.0.0.1',
-                              database='owe8_pg1',
+                              db='owe8_pg1',
                               use_pure=True)
     return cnx
 
@@ -203,6 +203,3 @@ def main():
     insert_Abstracten_has_compound(pmid, compoundNaam, 23, cnx)
     
     insert_Abstracten_has_crop(pmid,gewasNaam,420,cnx)
-    
-if __name__ == "__main__":
-    main()
