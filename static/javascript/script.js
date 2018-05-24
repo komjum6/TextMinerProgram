@@ -1,5 +1,6 @@
 function litteShit() {
-    
+// lijntjes clickbaar maken - > ajaxrequest -> pubmed artikelen -> artikelen requesten
+// nodes clickbaar maken ->  pubmed artikelen 
 
     var svg = d3.select("svg"),
     width = +svg.attr("width"),
@@ -25,7 +26,8 @@ d3.json(url, function(error, graph) {
     .selectAll("line")
     .data(graph.links)
     .enter().append("line")
-      .attr("stroke-width", function(d) { return Math.sqrt(d.value); });
+      .attr("stroke-width", function(d) { return Math.sqrt(d.value); })
+	 .on("click", function(d) { nodeClick(d); } );
 
   var node = svg.append("g")
       .attr("class", "nodes")
@@ -39,8 +41,8 @@ d3.json(url, function(error, graph) {
       .call(d3.drag()
           .on("start", dragstarted)
           .on("drag", dragged)
-          .on("end", dragended))
-	  .on("click", function(d) { nodeClick(d); } );
+          .on("end", dragended));
+
 		  
 
   var lables = node.append("text")
@@ -75,7 +77,7 @@ d3.json(url, function(error, graph) {
 });
 
 function nodeClick( node ) {
-     d3.select('h1').text(node.id)
+     d3.select('h1').text(node.source.id + ":reee:"+node.target.id)
     }
 
 function dragstarted(d) {
