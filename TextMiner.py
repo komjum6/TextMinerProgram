@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import json
 import mysql.connector
 app = Flask(__name__)
@@ -116,16 +116,87 @@ def jsonrequesturl():
     
     return json.dumps(dic)
 
-@app.route('/getPMIDinfo')
+#maak die cache dood!!!!
+@app.after_request
+def add_header(r):
+    """
+    Add headers to both force latest IE rendering engine or Chrome Frame,
+    and also to cache the rendered page for 10 minutes.
+    """
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    r.headers['Cache-Control'] = 'public, max-age=0'
+    return r
+
+
+# group1 = Compound
+# group2 = Crop
+# group3 = Health_benefit	
+@app.route('/getPMIDinfo', methods=['GET'])
 def getPMIDinfo():
     
-    cnx = mysql.connector.connect(user='owe8_pg1', password='blaat1234',
-                              host='127.0.0.1',
-                              db="owe8_pg1")
+    req_dic = request.args.to_dict()
     
-    cnx.close()
+    req2_dic = {}
     
-    return "testerino"
+    for key in req_dic.keys():
+        req2_dic[str(key)] = str(req_dic[key])
+    
+    req_dic = req2_dic
+    
+    query = ""
+    
+    if 'Compound' in req_dic and 'Crop' in req_dic:
+        
+        query = ("SELECT compound.Abstracten_PMID, Abstracten.Titel FROM Abstracten_has_Compound as compound INNER JOIN Abstracten_has_Crop as crop on compound.Abstracten_PMID = crop.Abstracten_PMID INNER JOIN Abstracten on Abstracten.PMID = compound.Abstracten_PMID "
+                "WHERE compound.Compound_name = %(Compound)s AND crop.Crop_name = %(Crop)s")
+        
+    elif 'Compound' in req_dic and 'Health_benefit' in req_dic:
+        
+        query = ("SELECT compound.Abstracten_PMID, Abstracten.Titel FROM Abstracten_has_Compound as compound INNER JOIN Abstracten_has_Health_benefit as health on compound.Abstracten_PMID = health.Abstracten_PMID INNER JOIN Abstracten on Abstracten.PMID = compound.Abstracten_PMID "
+                "WHERE compound.Compound_name = %(Compound)s AND health.Health_benefit_name = %(Health_benefit)s")
+        
+    elif 'Crop' in req_dic and 'Health_benefit' in req_dic:
+        query = ("SELECT crop.Abstracten_PMID, Abstracten.Titel FROM Abstracten_has_Crop as crop INNER JOIN Abstracten_has_Health_benefit as health on crop.Abstracten_PMID = health.Abstracten_PMID INNER JOIN Abstracten on Abstracten.PMID = crop.Abstracten_PMID "
+                "WHERE crop.Crop_name = %(Crop)s AND health.Health_benefit_name = %(Health_benefit)s")
+        
+    else:
+        pass
     
     
     
+    
+    
+
+    try:
+        cnx = mysql.connector.connect(user='owe8_pg1', password='blaat1234',
+                                      host='127.0.0.1',
+                                      db="owe8_pg1")
+        cursor = cnx.cursor()
+        cursor.execute(query,params=req_dic)
+        result = cursor.fetchall()
+        #lit lijstje met id's.
+        terug = ""
+        for (pmid, titel) in result:
+            terug += "<a href='"
+            terug += "https://www.ncbi.nlm.nih.gov/pubmed/" + str(pmid)
+            terug += "'>"
+            terug += str(titel)
+            terug += "</a>"
+        return terug
+            
+        
+        
+    except Exception as e:
+        ret_string = str(e)
+        ret_string += "<<<<>>>>"
+        ret_string += query
+        ret_string += "<<<<>>>>"
+        ret_string += str(req_dic)
+        return ret_string
+    finally:
+        cursor.close()
+        cnx.close()
+        
+    return "wow wacht wat"

@@ -76,9 +76,54 @@ d3.json(url, function(error, graph) {
   }
 });
 
-function nodeClick( node ) {
-     d3.select('h1').text(node.source.id + ":reee:"+node.target.id)
+function nodeClick( linkx ) {
+	var x = linkx.source
+	var y = linkx.target
+	
+     //d3.select('h1').text(linkx.source.id + ":reee:"+linkx.target.id)
+	 
+	 loadDoc(x,y)
+	 
     }
+
+	
+	
+// group1 = Compound
+// group2 = Crop
+// group3 = Health_benefit	
+function loadDoc(node1, node2) {
+	
+  var abs_url = "http://cytosine.nl/~owe8_pg1/Clickme.wsgi/getPMIDinfo"
+	
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      
+	  document.getElementById("linkPlace").innerHTML = this.responseText;
+	  
+	  
+    }
+  };
+  
+  if(node1.group == 1){type1 = "Compound"}
+  if(node1.group == 2){type1 = "Crop"}
+  if(node1.group == 3){type1 = "Health_benefit"}
+  
+  if(node2.group == 1){type2 = "Compound"}
+  if(node2.group == 2){type2 = "Crop"}
+  if(node2.group == 3){type2 = "Health_benefit"}
+  
+  var1 = node1.id
+  var2 = node2.id
+  
+  var var_str = "?"+type1 + "=" + var1  + "&" + type2 +"=" + var2;
+  
+  
+  
+  xhttp.open("GET", abs_url+var_str, true);
+  
+  xhttp.send();
+}
 
 function dragstarted(d) {
   if (!d3.event.active) simulation.alphaTarget(0.3).restart();
