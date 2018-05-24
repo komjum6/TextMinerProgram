@@ -75,8 +75,7 @@ def jsonrequesturl():
         dic["nodes"].append(dickie)
     
     
-    crop_compound = "SELECT Crop.Name, Compound.Name FROM Crop NATURAL JOIN Abstracten Natural Join Abstracten_has_Compound INNER JOIN Compound on Abstracten_has_Compound.Compound_Name = Compound.Name"
-    
+    crop_compound = "SELECT Crop.Name, Compound.Name FROM Crop INNER JOIN Abstracten_has_Crop on Crop.Name = Abstracten_has_Crop.Crop_Name INNER JOIN Abstracten_has_Compound ON Abstracten_has_Crop.Abstracten_PMID = Abstracten_has_Compound.Abstracten_PMID INNER JOIN Compound on Compound.Name = Abstracten_has_Compound.Compound_Name"
     cursor.execute(crop_compound)  
     fetchall = cursor.fetchall()
     
@@ -86,8 +85,7 @@ def jsonrequesturl():
         dic["links"].append(dickie)
     
     
-    compound_health_benefit = "SELECT Compound.Name, Health_benefit.Name FROM Compound NATURAL JOIN Abstracten NATURAL JOIN Abstracten_has_Health_benefit INNER JOIN Health_benefit on Abstracten_has_Health_benefit.Health_benefit_name = Health_benefit.Name"
-    
+    compound_health_benefit = "SELECT Compound.Name, Health_benefit.Name FROM Compound INNER JOIN Abstracten_has_Compound on Compound.Name = Abstracten_has_Compound.Compound_Name INNER JOIN Abstracten_has_Health_benefit ON Abstracten_has_Compound.Abstracten_PMID = Abstracten_has_Health_benefit.Abstracten_PMID INNER JOIN Health_benefit on Health_benefit.Name = Abstracten_has_Health_benefit.Health_benefit_Name"
     cursor.execute(compound_health_benefit)  
     fetchall = cursor.fetchall()
     
@@ -95,9 +93,33 @@ def jsonrequesturl():
         dickie = {"source" : a[0], "target" : a[1], "value" : 8}
         
         dic["links"].append(dickie)
+        
+        
+        
+    crop_health_benefit = "SELECT Crop.Name, Health_benefit.Name FROM Crop INNER JOIN Abstracten_has_Crop on Crop.Name = Abstracten_has_Crop.Crop_Name INNER JOIN Abstracten_has_Health_benefit ON Abstracten_has_Crop.Abstracten_PMID = Abstracten_has_Health_benefit.Abstracten_PMID INNER JOIN Health_benefit on Health_benefit.Name = Abstracten_has_Health_benefit.Health_benefit_Name"
+    cursor.execute(crop_health_benefit)  
+    fetchall = cursor.fetchall()
+    
+    for a in fetchall:
+        dickie = {"source" : a[0], "target" : a[1], "value" : 16}
+        
+        dic["links"].append(dickie)
     
     cursor.close()
     cnx.close()
     
     return json.dumps(dic)
+
+@app.route('/getPMIDinfo')
+def getPMIDinfo():
+    
+    cnx = mysql.connector.connect(user='owe8_pg1', password='blaat1234',
+                              host='127.0.0.1',
+                              db="owe8_pg1")
+    
+    cnx.close()
+    
+    return "testerino"
+    
+    
     
