@@ -10,7 +10,7 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
     
-#De plaats waar dingen gevisualiseerd worden
+#De plaats waar alles gevisualiseerd word
 @app.route('/visualisation')
 def visualisation():
     return render_template('visualisation.html')
@@ -25,10 +25,16 @@ def contact():
 def about():
     return render_template('about.html')
 
+#error 500 handling
 @app.errorhandler(500)
 def internal_error(error):
 
     return str(error)
+
+#error 404 handling
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('page_not_found.html'), 404
 	
 #Functie waar je ongein instouwt om een coole grafiek te kunnen genereren, potentieel AJAX
 @app.route('/jsonrequesturl')

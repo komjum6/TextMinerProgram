@@ -60,3 +60,7 @@
 
 >Justin 
 -Mijn eigen request afgehandeld, er komt nu resultaat waarvan het eerste deel (frequency dictionary) veelbelovend is. Maar het versturen van requests naar pubchem om te kijken of een woord een chemische verbinding is werkt op kleine schaal, maar niet op grote schaal. Wat ik hiermee bedoel is het volgende: Ik ging van alle woorden in een abstract naar alleen de zelfstandige naamwoorden. Die gaven een match als het in de database van pubchem stond en een lege lijst als dat niet zo was. Maar bij de zoekopdracht 'Momordica charantia' kwam ik 9986 zelfstandige naamwoorden tegen. Daarop wachten lijkt mij niet leuk voor een Bioloog. 
+
+##Versie 0.25
+>Bertram
+- De nieuwe templates/static files van de site
