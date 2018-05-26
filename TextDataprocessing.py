@@ -1,29 +1,12 @@
-#Voorbeeld van een artikel over de Bitter Gourd
-
-document = \
-"""Abstract
-Background
-Bitter melon (Momordica charantia) is a commonly used food crop for management of a variety of diseases most notably for control of diabetes, a disease associated with aberrant inflammation.
-
-Purpose
-To evaluate the anti-inflammatory property of BG-4, a novel bioactive peptide isolated from the seed of bitter melon.
-
-Methods
-Differentiated THP-1 human macrophages were pre-treated with BG-4 and stimulated with lipopolysaccharide. Pro-inflammatory cytokines IL-6 and TNF-α were measured by enzyme-linked immunosorbent assay. The mechanism of action involving activation of NF-κB and phosphorylation of ERK and STAT3 was measured by western blot and immunofluorescence. The production of intracellular reactive oxygen species was evaluated by fluorescence microscopy and fluorescence spectrophotometry.
-
-Results
-BG-4 dose dependently reduce the production of pro-inflammatory cytokines IL-6 and TNF-α. The ability of BG-4 to reduce production of cytokines are associated with reduced phosphorylation of ERK and STAT3 accompanied by reduced nuclear translocation of p65 NF-κB subunit. The mechanism of action is reduction of LPS-induced production of intracellular reactive oxygen species.
-
-Conclusion
-Our results demonstrated the ability of BG-4, a novel peptide from the seed of bitter melon, to exert anti-inflammatory action. This could explain the traditional use of bitter melon against diseases associated with aberrant and uncontrolled inflammation."""
-
 import nltk
 from pubmedRetrieval import *
 import itertools
 from nltk.probability import FreqDist
 import pubchempy as pch
 
-def init_class():
+#-----------------------------------------Het inlezen van de Pubmed data---------------------------------------------------------------
+#Het aanmaken van een Publishment class die als attributen de data van NCBI Pubmed bevat die gebruikt gaat worden
+def init_class(): #Deze wordt als eerste aangeroepen
     class Publishment:
         def __init__(self, pubmedID, title, abstract, article_date, keywords):
             self.pubmedID = pubmedID
@@ -31,33 +14,51 @@ def init_class():
             self.abstract = abstract
             self.article_date = article_date
             self.keywords = keywords        
-    fill_data(Publishment)
+    fill_data(Publishment) #Aanroepen volgende functie met de class
     
 def fill_data(Publishment):
-    results = search('Momordica charantia')
-    id_list = results['IdList']
-    papers = fetch_details(id_list)
+    results = search('Momordica charantia') #Zoeken naar een bepaald woord in Pubmed
+    id_list = results['IdList'] #Een lijst maken van de results
+    papers = fetch_details(id_list) #Maak hier een variabele van
     
-    paper_object_list = []
+    paper_object_list = [] #Lijst voor de objecten 
        
-    for i, paper in enumerate(papers['PubmedArticle']):
+    for i, paper in enumerate(papers['PubmedArticle']): #Een loop voor publicaties die terugkomen
         try:
-            paper = Publishment(get_PMID(paper),get_title(paper),get_abstract(paper),get_article_date(paper),get_keywords(paper))
-            paper_object_list.append(paper)
+            paper = Publishment(get_PMID(paper),get_title(paper),get_abstract(paper),get_article_date(paper),get_keywords(paper)) #Vullen van de class
+            paper_object_list.append(paper) #Het object toevoegen aan de lijst met objecten
             
         except KeyError:
             pass
-    
-    sentences = [preprocess(str(paper.abstract)) for paper in paper_object_list]
-    nouns_abstract_list = extract_nouns(sentences)
-    list_of_all_dicts = get_frequencies(nouns_abstract_list)
-    Frequency_dict_all = list_of_all_dicts[0]
-    print(len(Frequency_dict_all))
-    #for word, frequency in Frequency_dict_all.most_common(len(nouns_abstract_list)):
-    #    print(u'{};{}'.format(word, frequency))
-    #chemicals = find_compounds(Frequency_dict_all)
-    #print(chemicals)
+        
+    Mainprocess(paper, paper_object_list) #Aanroepen volgende functie met de variabelen    
 
+#-----------------------------------------Het aanroepen en uitvoeren van alle functies--------------------------------------------------- 
+    
+def Mainprocess(paper, paper_object_list):    
+    sentences = [preprocess(str(paper.abstract)) for paper in paper_object_list] #Het preprocessen van de abstracten van de paper objecten
+    nouns_abstract_list = extract_nouns(sentences) #Het extraheren van zelfstandige naamwoorden uit de abstracten
+    list_of_all_dicts = get_frequencies(nouns_abstract_list) #Het maken van frequentie dictionaries uit de abstracten, index 0 hiervan is van de hele zoekopdracht en index 1 per abstract
+    Frequency_dict_all = list_of_all_dicts[0] #Dit is dus de frequentie dictionary van alle abstracten van een zoekopdracht
+    listy = list_of_all_dicts[1]
+    
+    organism_list = ['momordica', 'charantia', 'melon', 'gourd']
+    compounds = ['oxygen', 'hydrogen']
+    benefits = ['diabetes']
+    
+    for count, dicty in enumerate(listy):
+        for word, frequency in dicty:
+            if word in (organism_list + compounds + benefits):
+                if word in organism_list:
+                    print(str(count) + " " + word + " " + str(paper_object_list[count].pubmedID + " organism"))
+                if word in compounds:
+                    print(str(count) + " " + word + " " + str(paper_object_list[count].pubmedID + " compound"))
+                if word in benefits:
+                    print(str(count) + " " + word + " " + str(paper_object_list[count].pubmedID + " benefit"))
+    #geen find_compounds
+
+#-----------------------------------------Preprocessing en Tokenizing--------------------------------------------------------------------    
+    
 def preprocess(document):
     sentences = nltk.sent_tokenize(document)
     sentences = [nltk.word_tokenize(sent) for sent in sentences]
@@ -70,11 +71,13 @@ def grammarize(sentence):
     result = cp.parse(sentence)
     return result
 
+#-----------------------------------------Preprocessing, vinden zelfstandige naamwoorden en frequenties----------------------------------
+
 def extract_nouns(sentences, nouns_abstract_list = []):
     abstract_list = list(itertools.chain(*sentences))
     is_noun = lambda pos: pos[:2] == 'NN'
     for abstract in abstract_list:
-        nouns = [word for (word, pos) in abstract if is_noun(pos)] #nouns per abstract 
+        nouns = [word for (word, pos) in abstract if is_noun(pos)] #zelfstandige naamwoorden per abstract 
         nouns_abstract_list.append(nouns)
     return nouns_abstract_list
 
@@ -86,22 +89,24 @@ def get_frequencies(nouns_abstract_list, list_of_dicts = [], Frequency_dict_all 
         Frequency_dict_all.update(words)
     return [Frequency_dict_all,list_of_dicts]
 
+#-----------------------------------------De data die de database via Database.py moet opslaan (zoals compounds)-------------------------
+
 def find_compounds(Frequency_dict_all):
     listcompoundobject = []
     chemicals =[]
 
-    #for noun in Frequency_dict_all:
-    #    if noun not in ['melon', 'AND', 'result', 'component', 'for', 'may' , 'male', 'equal', 'control', 'access', 'we', 'side', 'target', 'action'] : #Sorry dat het hardcoded moet, maar ik wil geen chemische verbinding genaamd melon
-    #        results = pch.get_compounds(noun, 'name')
-    #        if results != []:
-    #            chemicals.append(noun)
-    #            listcompoundobject.append(results[0])
-                
     for noun in Frequency_dict_all:
-        results = pch.get_compounds(noun, 'name')
-        if results != []:
-            chemicals.append(noun)
-            listcompoundobject.append(results[0])
+        if noun not in ['melon', 'AND', 'result', 'component', 'for', 'may' , 'male', 'equal', 'control', 'access', 'we', 'side', 'target', 'action'] : #Sorry dat het hardcoded moet, maar ik wil geen chemische verbinding genaamd melon
+            results = pch.get_compounds(noun, 'name')
+            if results != []:
+                chemicals.append(noun)
+                listcompoundobject.append(results[0])
+                
+    #for noun in Frequency_dict_all:
+    #    results = pch.get_compounds(noun, 'name')
+    #    if results != []:
+    #        chemicals.append(noun)
+    #        listcompoundobject.append(results[0])
     return chemicals
     #print(listcompoundobject)
     #print('-'*10 + '\n')
