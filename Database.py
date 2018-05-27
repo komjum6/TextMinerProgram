@@ -14,9 +14,12 @@ def get_conn():
     
     cnx = mysql.connector.connect(user='owe8_pg1', password='blaat1234',
                               host='127.0.0.1',
-                              db='owe8_pg1',
-                              use_pure=True)
+                              db='owe8_pg1')
     return cnx
+
+def commit_conn(cnx):
+    cnx.commit()
+    cnx.close()
 
 def insert_pubmed(PMID,titel,keywords,abstract,year,month,day, cnx):
     
@@ -28,6 +31,7 @@ def insert_pubmed(PMID,titel,keywords,abstract,year,month,day, cnx):
     result = cursor.fetchall()
     
     if len(result) > 0:
+        cursor.close()
         return result[0][0]
     else:
 
@@ -36,14 +40,50 @@ def insert_pubmed(PMID,titel,keywords,abstract,year,month,day, cnx):
         data = (PMID,keywords, titel,abstract, datetime.date(year, month, day))
     
         cursor.execute(insert_statement,data)
-        cnx.commit()
         
-        select_stmt = ("SELECT PMID FROM Abstracten WHERE PMID = %(pmid)s")
+        
+        select_stmt = ("SELECT PMID FROM Abstracten WHERE PMID = %(PMID)s")
         cursor.execute(select_stmt, {'PMID' : PMID})
         result = cursor.fetchall()
+        cursor.close()
         return result[0][0]
         
-        
+
+def get_health_benefits(cnx):
+
+    cursor = cnx.cursor()
+    select_stmt = "SELECT Name FROM Health_benefit"
+    cursor.execute(select_stmt)
+    
+    health_benefit_list = []
+    for naam in cursor:
+        health_benefit_list.append(naam[0])
+    cursor.close()
+    return health_benefit_list
+
+def get_crops(cnx):
+
+    cursor = cnx.cursor()
+    select_stmt = "SELECT Name FROM Crop"
+    cursor.execute(select_stmt)
+    
+    crop_list = []
+    for naam in cursor:
+        crop_list.append(naam[0])
+    cursor.close()
+    return crop_list
+
+def get_compounds(cnx):
+
+    cursor = cnx.cursor()
+    select_stmt = "SELECT Name FROM Compound"
+    cursor.execute(select_stmt)
+    
+    compound_list = []
+    for naam in cursor:
+        compound_list.append(naam[0])
+    cursor.close()
+    return compound_list
         
     
 
@@ -57,6 +97,7 @@ def insert_crop(naam, cnx):
     result = cursor.fetchall()
     
     if len(result) > 0:
+        cursor.close()
         return result[0][0]
         
     else:        
@@ -64,7 +105,8 @@ def insert_crop(naam, cnx):
                      "VALUES (%s)")
         
         cursor.execute(insert_stmt,(naam,))
-        cnx.commit()
+        cursor.close()
+        
         
         
 def insert_compound(naam, cnx):
@@ -76,6 +118,7 @@ def insert_compound(naam, cnx):
     result = cursor.fetchall()
     
     if len(result) > 0:
+        cursor.close()
         return result[0][0]
         
     else:        
@@ -83,7 +126,7 @@ def insert_compound(naam, cnx):
                      "VALUES (%s)")
         
         cursor.execute(insert_stmt,(naam,))
-        cnx.commit()
+        cursor.close()
     
 
 def insert_health_benefit(naam, cnx):
@@ -95,14 +138,15 @@ def insert_health_benefit(naam, cnx):
     result = cursor.fetchall()
     
     if len(result) > 0:
+        cursor.close()
         return result[0][0]
         
     else:        
         insert_stmt = ("INSERT INTO Health_benefit (Name) "
                      "VALUES (%s)")
-        
+        cursor.close()
         cursor.execute(insert_stmt,(naam,))
-        cnx.commit() 
+        
     
 # we gaan ervanuit dat de compound er al instaat, want dat moet eerst gebeuren
 def insert_Abstracten_has_compound(pmid, compound, count, cnx):
@@ -127,7 +171,7 @@ def insert_Abstracten_has_compound(pmid, compound, count, cnx):
         data = (pmid, compound, count)
     
         cursor.execute(insert_stmt,data)
-        cnx.commit()
+        cursor.close()
    
     
     
@@ -155,7 +199,9 @@ def insert_Abstracten_has_crop(pmid, crop, count, cnx):
         data = (pmid, crop, count)
     
         cursor.execute(insert_stmt,data)
-        cnx.commit()
+        cursor.close()
+    else:
+        cursor.close()
     
     
 # we gaan ervanuit dat de health_factor er al instaat want dat moet eerst gebeuren
@@ -180,7 +226,9 @@ def insert_Abstracten_has_health_benefit(pmid, health_benefit, count, cnx):
         data = (pmid, health_benefit, count)
     
         cursor.execute(insert_stmt,data)
-        cnx.commit()
+        cursor.close()
+    else:
+        cursor.close()
 
 def main():
     

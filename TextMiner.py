@@ -183,7 +183,7 @@ def getPMIDinfo():
             terug += "https://www.ncbi.nlm.nih.gov/pubmed/" + str(pmid)
             terug += "'>"
             terug += str(titel)
-            terug += "</a>"
+            terug += "</a><br /><br />"
         return terug
             
         
