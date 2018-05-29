@@ -4,7 +4,6 @@ import mysql.connector
 app = Flask(__name__)
 
 
-
 #De Root Map
 @app.route('/')
 def index():
@@ -37,7 +36,7 @@ def page_not_found(error):
     return render_template('page_not_found.html'), 404
 	
 #Functie waar je ongein instouwt om een coole grafiek te kunnen genereren, potentieel AJAX
-@app.route('/jsonrequesturl')
+@app.route('/jsonrequesturl', methods = ['GET'])
 def jsonrequesturl():
     
     cnx = mysql.connector.connect(user='owe8_pg1', password='blaat1234',
@@ -45,13 +44,23 @@ def jsonrequesturl():
                               db="owe8_pg1")
     
     dic = {}
+    thickest = 1
+    toHide = request.args.get('toHide')
+    
     
     dic["nodes"] = []
     dic["links"] = []
     
     cursor = cnx.cursor()
     
-    select_compounds = "SELECT Name FROM  Compound"
+    #zodat nodes als ze geen verbinding hebben weg zijn
+    select_compounds =  """ 
+                        SELECT DISTINCT(compound.Compound_Name) 
+                        FROM Abstracten_has_Compound as compound
+                        """
+
+
+
     cursor.execute(select_compounds)
     fetchall = cursor.fetchall()
     
@@ -61,7 +70,11 @@ def jsonrequesturl():
         dic["nodes"].append(dickie)
     
     
-    select_crops = "SELECT Name FROM Crop" 
+    select_crops =  """
+                    SELECT DISTINCT(crop.Crop_Name) 
+                    FROM Abstracten_has_Crop as crop  
+                    """ 
+                    
     cursor.execute(select_crops)  
     fetchall = cursor.fetchall()
     
@@ -71,7 +84,11 @@ def jsonrequesturl():
         dic["nodes"].append(dickie)
         
     
-    select_health_benefit = "SELECT Name FROM Health_benefit" 
+    select_health_benefit = """
+                            SELECT DISTINCT(health.Health_benefit_Name) 
+                            FROM Abstracten_has_Health_benefit as health  
+                            """ 
+                            
     cursor.execute(select_health_benefit)  
     fetchall = cursor.fetchall()
     
@@ -80,37 +97,57 @@ def jsonrequesturl():
         
         dic["nodes"].append(dickie)
     
-    
-    crop_compound = "SELECT Crop.Name, Compound.Name FROM Crop INNER JOIN Abstracten_has_Crop on Crop.Name = Abstracten_has_Crop.Crop_Name INNER JOIN Abstracten_has_Compound ON Abstracten_has_Crop.Abstracten_PMID = Abstracten_has_Compound.Abstracten_PMID INNER JOIN Compound on Compound.Name = Abstracten_has_Compound.Compound_Name"
-    cursor.execute(crop_compound)  
-    fetchall = cursor.fetchall()
-    
-    for a in fetchall:
-        dickie = {"source" : a[0], "target" : a[1], "value" : 1}
-        
-        dic["links"].append(dickie)
-    
-    
-    compound_health_benefit = "SELECT Compound.Name, Health_benefit.Name FROM Compound INNER JOIN Abstracten_has_Compound on Compound.Name = Abstracten_has_Compound.Compound_Name INNER JOIN Abstracten_has_Health_benefit ON Abstracten_has_Compound.Abstracten_PMID = Abstracten_has_Health_benefit.Abstracten_PMID INNER JOIN Health_benefit on Health_benefit.Name = Abstracten_has_Health_benefit.Health_benefit_Name"
-    cursor.execute(compound_health_benefit)  
-    fetchall = cursor.fetchall()
-    
-    for a in fetchall:
-        dickie = {"source" : a[0], "target" : a[1], "value" : 8}
-        
-        dic["links"].append(dickie)
+    if(toHide != "cropcompound"): #cropcompound of compoundhealthbenefit of crophealthbenefit
+        crop_compound = """
+                        SELECT crop.Crop_Name, compound.Compound_Name, COUNT( * ) 
+                        FROM Abstracten_has_Crop AS crop 
+                        INNER JOIN Abstracten_has_Compound AS compound ON crop.Abstracten_PMID = compound.Abstracten_PMID 
+                        GROUP BY crop.Crop_Name, compound.Compound_Name 
+                        """
         
         
         
-    crop_health_benefit = "SELECT Crop.Name, Health_benefit.Name FROM Crop INNER JOIN Abstracten_has_Crop on Crop.Name = Abstracten_has_Crop.Crop_Name INNER JOIN Abstracten_has_Health_benefit ON Abstracten_has_Crop.Abstracten_PMID = Abstracten_has_Health_benefit.Abstracten_PMID INNER JOIN Health_benefit on Health_benefit.Name = Abstracten_has_Health_benefit.Health_benefit_Name"
-    cursor.execute(crop_health_benefit)  
-    fetchall = cursor.fetchall()
+        cursor.execute(crop_compound)  
+        fetchall = cursor.fetchall()
     
-    for a in fetchall:
-        dickie = {"source" : a[0], "target" : a[1], "value" : 16}
+        for a in fetchall:
+            dickie = {"source" : a[0], "target" : a[1], "value" : int(a[2])}
+            thickest = min(thickest,a[2])
+            dic["links"].append(dickie)
+    
+    if(toHide != "compoundhealthbenefit"):
+        compound_health_benefit = """
+                                SELECT compound.Compound_Name, health.Health_benefit_Name, COUNT( * ) 
+                                FROM Abstracten_has_Compound AS compound 
+                                INNER JOIN Abstracten_has_Health_benefit AS health ON compound.Abstracten_PMID = health.Abstracten_PMID 
+                                GROUP BY compound.Compound_Name, health.Health_benefit_Name 
+                                """
+                        
+        cursor.execute(compound_health_benefit)  
+        fetchall = cursor.fetchall()
         
-        dic["links"].append(dickie)
-    
+        for a in fetchall:
+            dickie = {"source" : a[0], "target" : a[1], "value" : a[2]}
+            thickest = min(thickest,a[2])
+            dic["links"].append(dickie)
+        
+        
+    if(toHide != "crophealthbenefit"):   
+        crop_health_benefit = """
+                            SELECT crop.Crop_Name, health.Health_benefit_Name, COUNT( * ) 
+                            FROM Abstracten_has_Crop AS crop 
+                            INNER JOIN Abstracten_has_Health_benefit AS health ON crop.Abstracten_PMID = health.Abstracten_PMID 
+                            GROUP BY crop.Crop_Name, health.Health_benefit_Name 
+                            """
+        
+        cursor.execute(crop_health_benefit)  
+        fetchall = cursor.fetchall()
+        
+        for a in fetchall:
+            dickie = {"source" : a[0], "target" : a[1], "value" : a[2]}
+            thickest = min(thickest,a[2])
+            dic["links"].append(dickie)
+    dic["thickest"] = thickest
     cursor.close()
     cnx.close()
     
@@ -163,11 +200,6 @@ def getPMIDinfo():
         
     else:
         pass
-    
-    
-    
-    
-    
 
     try:
         cnx = mysql.connector.connect(user='owe8_pg1', password='blaat1234',

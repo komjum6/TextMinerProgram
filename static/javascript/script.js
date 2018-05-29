@@ -1,4 +1,4 @@
-function litteShit() {
+function litteShit(toHide) {
 // lijntjes clickbaar maken - > ajaxrequest -> pubmed artikelen -> artikelen requesten
 // nodes clickbaar maken ->  pubmed artikelen 
 
@@ -9,14 +9,14 @@ function litteShit() {
 var color = d3.scaleOrdinal(d3.schemeCategory20);
 
 var simulation = d3.forceSimulation()
-    .force("link", d3.forceLink().id(function(d) { return d.id; }).distance(100))
-	//.force("link", d3.forceLink().id(function (d) {return d.id;}).distance(100).strength(1))
-    .force("charge", d3.forceManyBody(100))
-    .force("center", d3.forceCenter(width / 2, height / 2));
+    
+	 .force("link", d3.forceLink().id(function (d) {return d.id;})) // hoe hard de linkjes boeien
+    .force("charge", d3.forceManyBody().strength(-1000).distanceMin(150)) // hoe geladen de nodes zich naar elkaar gedragen
+    .force("center", d3.forceCenter(width / 2, height / 2)); //forceer naar het midden 
 
 
 var abs_url = "http://cytosine.nl/~owe8_pg1/Clickme.wsgi/jsonrequesturl"
-var url = abs_url
+var url = abs_url + "?toHide="+toHide //cropcompound of compoundhealthbenefit of crophealthbenefit
 
 d3.json(url, function(error, graph) {
   if (error) throw error;
@@ -26,7 +26,7 @@ d3.json(url, function(error, graph) {
     .selectAll("line")
     .data(graph.links)
     .enter().append("line")
-      .attr("stroke-width", function(d) { return Math.sqrt(d.value); })
+      .attr("stroke-width", function(d) { return lineWidth(d.value); })
 	 .on("click", function(d) { nodeClick(d); } );
 
   var node = svg.append("g")
@@ -59,7 +59,7 @@ d3.json(url, function(error, graph) {
       .nodes(graph.nodes)
       .on("tick", ticked);
 
-  simulation.force("link")
+ simulation.force("link")
       .links(graph.links);
 
    function ticked() {
@@ -138,7 +138,14 @@ function dragged(d) {
 
 function dragended(d) {
   if (!d3.event.active) simulation.alphaTarget(0);
-  d.fx = null;
-  d.fy = null;
+  d.fx = d3.event.x;
+  d.fy = d3.event.y;
 }
+
+function lineWidth(i){
+    return 2 * (Math.log(i) / Math.log(10)) + 2;
+
+}
+
+
 }
