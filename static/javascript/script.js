@@ -10,9 +10,9 @@ var color = d3.scaleOrdinal(d3.schemeCategory20);
 
 var simulation = d3.forceSimulation()
     
-	 .force("link", d3.forceLink().id(function (d) {return d.id;})) // hoe hard de linkjes boeien
-    .force("charge", d3.forceManyBody().strength(-1000).distanceMin(150)) // hoe geladen de nodes zich naar elkaar gedragen
-    .force("center", d3.forceCenter(width / 2, height / 2)); //forceer naar het midden 
+	 .force("link", d3.forceLink().id(function (d) {return d.id;}))
+    .force("charge", d3.forceManyBody().strength(-1000).distanceMin(150))
+    .force("center", d3.forceCenter(width / 2, height / 2));
 
 
 var abs_url = "http://cytosine.nl/~owe8_pg1/Clickme.wsgi/jsonrequesturl"
@@ -146,6 +146,6 @@ function lineWidth(i){
     return 2 * (Math.log(i) / Math.log(10)) + 2;
 
 }
-
-
+var svgtje = document.getElementsByTagName("svg")[0];
+svgtje.style.borderStyle = "solid";
 }
