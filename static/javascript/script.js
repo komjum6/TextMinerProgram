@@ -128,18 +128,30 @@ function loadDoc(node1, node2) {
 function dragstarted(d) {
   if (!d3.event.active) simulation.alphaTarget(0.3).restart();
   d.fx = d.x;
+  d.fx = Math.max(0, d.fx);
+  d.fx = Math.min(945, d.fx);
   d.fy = d.y;
+  d.fy = Math.max(0, d.fy);
+  d.fy = Math.min(595, d.fy);
 }
 
 function dragged(d) {
   d.fx = d3.event.x;
+  d.fx = Math.max(0, d.fx);
+  d.fx = Math.min(945, d.fx);
   d.fy = d3.event.y;
+  d.fy = Math.max(0, d.fy);
+  d.fy = Math.min(595, d.fy);
 }
 
 function dragended(d) {
   if (!d3.event.active) simulation.alphaTarget(0);
   d.fx = d3.event.x;
+  d.fx = Math.max(0, d.fx);
+  d.fx = Math.min(945, d.fx);
   d.fy = d3.event.y;
+  d.fy = Math.max(0, d.fy);
+  d.fy = Math.min(595, d.fy);
 }
 
 function lineWidth(i){
