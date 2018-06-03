@@ -35,9 +35,10 @@ def search_ids(query):
     
     id_lijst = []
     
-    batch_size = 100000
+    batch_size = 10000
     
     for i in range(0,amount_of_hits,batch_size):
+        Entrez.email = 'huub.goltstein@gmail.com'
         handle = Entrez.esearch(db='pubmed', 
                             sort='relevance', 
                             retmax=batch_size,
@@ -75,10 +76,10 @@ def insert_term(term,term_type, cnx):
     
     cursor = cnx.cursor()
         
-    sel_query =     """
-                    SELECT id FROM term_type
-                    WHERE term_type = %s         
-                    """
+    sel_query = """
+                SELECT id FROM term_type
+                WHERE term_type = %s         
+                """
                     
     cursor.execute(sel_query,term_type)
     term_type_id = cursor.fetchall()[0][0]
@@ -103,7 +104,7 @@ def insert_article(id_lijst,cnx):
     
     insert_stmt = "INSERT IGNORE INTO articles (PMID) VALUES (%s)"  #nobody cares if itś there already  
     cursor.executemany(insert_stmt,nieuw)
-    cnx.commit()
+    
     return
 
 def searcherino(term):
@@ -114,12 +115,13 @@ def searcherino(term):
     
     conn = get_conn()
     
-    for i in range(347000,len(id_lijst),1000):
+    for i in range(0,len(id_lijst),1000):
         small = id_lijst[i:i+1000]
         insert_article(small,conn)
         insert_term_articles(small,term,conn)
         print("at: ",i)
-    conn.commit()
+        conn.commit()
+    
     
     print("aw ye boi")
     

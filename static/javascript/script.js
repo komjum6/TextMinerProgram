@@ -1,4 +1,4 @@
-function litteShit(toHide) {
+function litteShit() {
 // lijntjes clickbaar maken - > ajaxrequest -> pubmed artikelen -> artikelen requesten
 // nodes clickbaar maken ->  pubmed artikelen 
 
@@ -6,19 +6,21 @@ function litteShit(toHide) {
     width = +svg.attr("width"),
     height = +svg.attr("height");
 
-var color = d3.scaleOrdinal(d3.schemeCategory20);
+    var color = d3.scaleOrdinal(d3.schemeCategory20);
 
-var simulation = d3.forceSimulation()
+    var simulation = d3.forceSimulation()
     
 	 .force("link", d3.forceLink().id(function (d) {return d.id;}))
-    .force("charge", d3.forceManyBody().strength(-1000).distanceMin(150))
+    .force("charge", d3.forceManyBody().strength(-1000).distanceMin(250))
     .force("center", d3.forceCenter(width / 2, height / 2));
 
+    var linkedByIndex = {};
+    
 
-var abs_url = "http://cytosine.nl/~owe8_pg1/Clickme.wsgi/jsonrequesturl"
-var url = abs_url + "?toHide="+toHide //cropcompound of compoundhealthbenefit of crophealthbenefit
+    var abs_url = "http://cytosine.nl/~owe8_pg1/static/javascript/data.json"
+    
 
-d3.json(url, function(error, graph) {
+d3.json(abs_url, function(error, graph) {
   if (error) throw error;
 
    var link = svg.append("g")
@@ -27,13 +29,14 @@ d3.json(url, function(error, graph) {
     .data(graph.links)
     .enter().append("line")
       .attr("stroke-width", function(d) { return lineWidth(d.value); })
-	 .on("click", function(d) { nodeClick(d); } );
+	 .on("click", function(d) { linkClick(d); } );
 
   var node = svg.append("g")
       .attr("class", "nodes")
     .selectAll("g")
     .data(graph.nodes)
     .enter().append("g")
+    .on("click", function(d) { connTo(d); } )
     
   var circles = node.append("circle")
       .attr("r", 10)
@@ -61,7 +64,19 @@ d3.json(url, function(error, graph) {
 
  simulation.force("link")
       .links(graph.links);
+      
+     
+    for (i = 0; i < graph.nodes.length; i++) {
+    linkedByIndex[graph.nodes[i].id + "," + graph.nodes[i].id] = 1;
+    };
+    graph.links.forEach(function (d) {
+    linkedByIndex[d.source.id + "," + d.target.id] = 1;
+    });
 
+    function neighboring(a, b) {
+    return linkedByIndex[a.index + "," + b.index];
+    }
+    
    function ticked() {
     link
         .attr("x1", function(d) { return d.source.x; })
@@ -76,7 +91,51 @@ d3.json(url, function(error, graph) {
   }
 });
 
-function nodeClick( linkx ) {
+function connTo(node) {
+	var g = d3.select("svg").select(".links").selectAll("line");
+	
+	var derp = {}
+	derp[node.id] = 1
+    
+    console.log(linkedByIndex)
+    
+    g.each(function(d) {
+        
+        
+    	if (d.source == node && !(derp[d.target])){
+        	derp[d.target.id] = 1
+        }
+        if (d.target == node && !(derp[d.source])){
+            derp[d.source.id] = 1
+        }
+        
+    	
+    });
+    
+    d3.select("svg").select(".nodes").selectAll("g").each(function(item,index){
+    
+        if (!(derp[item.id])){
+            
+            console.log(item.id)
+            console.log(derp)
+            d3.select(this).style("visibility", "hidden");
+        }    
+    
+    });
+    
+    g.each(function(d){   
+        
+        if (!(derp[d.source.id]) || !(derp[d.target.id])){
+        
+            d3.select(this).style("visibility","hidden");
+        }
+            
+        
+    });
+
+}
+
+function linkClick( linkx ) {
 	var x = linkx.source
 	var y = linkx.target
 	
@@ -104,21 +163,11 @@ function loadDoc(node1, node2) {
 	  
     }
   };
-  
-  if(node1.group == 1){type1 = "Compound"}
-  if(node1.group == 2){type1 = "Crop"}
-  if(node1.group == 3){type1 = "Health_benefit"}
-  
-  if(node2.group == 1){type2 = "Compound"}
-  if(node2.group == 2){type2 = "Crop"}
-  if(node2.group == 3){type2 = "Health_benefit"}
-  
+    
   var1 = node1.id
   var2 = node2.id
   
-  var var_str = "?"+type1 + "=" + var1  + "&" + type2 +"=" + var2;
-  
-  
+  var var_str = "?1=" + var1 + "&2=" + var2;
   
   xhttp.open("GET", abs_url+var_str, true);
   

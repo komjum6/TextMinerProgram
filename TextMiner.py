@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request
 import json
 import mysql.connector
-app = Flask(__name__)
+import traceback
 
+app = Flask(__name__)
 
 #De Root Map
 @app.route('/')
@@ -28,7 +29,12 @@ def about():
 @app.errorhandler(500)
 def internal_error(error):
 
-    return str(error)
+    tbo = error.__traceback__
+    tb = traceback.extract_tb(tbo)
+    
+    return str(error) +">>" + str(tb)
+    
+
 
 #error 404 handling
 @app.errorhandler(404)
@@ -36,122 +42,65 @@ def page_not_found(error):
     return render_template('page_not_found.html'), 404
 	
 #Functie waar je ongein instouwt om een coole grafiek te kunnen genereren, potentieel AJAX
-@app.route('/jsonrequesturl', methods = ['GET'])
-def jsonrequesturl():
+
+#Functie waar je ongein instouwt om een coole grafiek te kunnen genereren, potentieel AJAX
+@app.route('/jsonstoreurl', methods = ['GET'])
+def jsonstoreurl():
     
-    cnx = mysql.connector.connect(user='owe8_pg1', password='blaat1234',
-                              host='127.0.0.1',
-                              db="owe8_pg1")
+    cnx = mysql.connector.connect(user='owe8_pg1', 
+                                  password='blaat1234',
+                                  host='127.0.0.1',
+                                  db="owe8_pg1")
     
     dic = {}
     thickest = 1
-    toHide = request.args.get('toHide')
-    
     
     dic["nodes"] = []
     dic["links"] = []
     
     cursor = cnx.cursor()
-    
-    #zodat nodes als ze geen verbinding hebben weg zijn
-    select_compounds =  """ 
-                        SELECT DISTINCT(compound.Compound_Name) 
-                        FROM Abstracten_has_Compound as compound
-                        """
-
-
-
-    cursor.execute(select_compounds)
+        
+        #overly intesive, moet geoptimaliseerd worden.
+    sel_query = """
+                SELECT COUNT( * ) , tt1.id, tt2.id, t1.mesh_term, t2.mesh_term
+                FROM term_type AS tt1
+                INNER JOIN terms AS t1 ON tt1.id = t1.term_type_id
+                INNER JOIN articles_terms AS at1 ON at1.terms_id = t1.id
+                INNER JOIN articles_terms AS at2 ON at1.articles_id = at2.articles_id
+                AND at1.terms_id < at2.terms_id
+                INNER JOIN terms AS t2 ON at2.terms_id = t2.id
+                INNER JOIN term_type AS tt2 ON t2.term_type_id = tt2.id
+                GROUP BY at1.terms_id, at2.terms_id
+                """
+                
+    cursor.execute(sel_query)
     fetchall = cursor.fetchall()
     
     for a in fetchall:
-        dickie = {"id" : a, "group" : 1}
+        dickie = {"source" : a[3] , "target" : a[4], "value" : int(a[0])}
+        thickest = min(thickest,a[0])  
         
-        dic["nodes"].append(dickie)
+        node = {"id" : a[3], "group" : a[1]}
+        if node not in dic["nodes"]:
+            dic["nodes"].append(node)
+        
+        node = {"id" : a[4], "group" : a[2]}
+        if node not in dic["nodes"]:
+            dic["nodes"].append(node) 
+        
+        dic["links"].append(dickie)
     
     
-    select_crops =  """
-                    SELECT DISTINCT(crop.Crop_Name) 
-                    FROM Abstracten_has_Crop as crop  
-                    """ 
-                    
-    cursor.execute(select_crops)  
-    fetchall = cursor.fetchall()
     
-    for a in fetchall:
-        dickie = {"id" : a, "group" : 2}
-        
-        dic["nodes"].append(dickie)
-        
-    
-    select_health_benefit = """
-                            SELECT DISTINCT(health.Health_benefit_Name) 
-                            FROM Abstracten_has_Health_benefit as health  
-                            """ 
-                            
-    cursor.execute(select_health_benefit)  
-    fetchall = cursor.fetchall()
-    
-    for a in fetchall:
-        dickie = {"id" : a, "group" : 3}
-        
-        dic["nodes"].append(dickie)
-    
-    if(toHide != "cropcompound"): #cropcompound of compoundhealthbenefit of crophealthbenefit
-        crop_compound = """
-                        SELECT crop.Crop_Name, compound.Compound_Name, COUNT( * ) 
-                        FROM Abstracten_has_Crop AS crop 
-                        INNER JOIN Abstracten_has_Compound AS compound ON crop.Abstracten_PMID = compound.Abstracten_PMID 
-                        GROUP BY crop.Crop_Name, compound.Compound_Name 
-                        """
-        
-        
-        
-        cursor.execute(crop_compound)  
-        fetchall = cursor.fetchall()
-    
-        for a in fetchall:
-            dickie = {"source" : a[0], "target" : a[1], "value" : int(a[2])}
-            thickest = min(thickest,a[2])
-            dic["links"].append(dickie)
-    
-    if(toHide != "compoundhealthbenefit"):
-        compound_health_benefit = """
-                                SELECT compound.Compound_Name, health.Health_benefit_Name, COUNT( * ) 
-                                FROM Abstracten_has_Compound AS compound 
-                                INNER JOIN Abstracten_has_Health_benefit AS health ON compound.Abstracten_PMID = health.Abstracten_PMID 
-                                GROUP BY compound.Compound_Name, health.Health_benefit_Name 
-                                """
-                        
-        cursor.execute(compound_health_benefit)  
-        fetchall = cursor.fetchall()
-        
-        for a in fetchall:
-            dickie = {"source" : a[0], "target" : a[1], "value" : a[2]}
-            thickest = min(thickest,a[2])
-            dic["links"].append(dickie)
-        
-        
-    if(toHide != "crophealthbenefit"):   
-        crop_health_benefit = """
-                            SELECT crop.Crop_Name, health.Health_benefit_Name, COUNT( * ) 
-                            FROM Abstracten_has_Crop AS crop 
-                            INNER JOIN Abstracten_has_Health_benefit AS health ON crop.Abstracten_PMID = health.Abstracten_PMID 
-                            GROUP BY crop.Crop_Name, health.Health_benefit_Name 
-                            """
-        
-        cursor.execute(crop_health_benefit)  
-        fetchall = cursor.fetchall()
-        
-        for a in fetchall:
-            dickie = {"source" : a[0], "target" : a[1], "value" : a[2]}
-            thickest = min(thickest,a[2])
-            dic["links"].append(dickie)
     dic["thickest"] = thickest
     cursor.close()
     cnx.close()
     
-    return json.dumps(dic)
+    with open('/home/owe8_pg1/public_html/static/javascript/data.json', 'w') as outfile:
+        json.dump(dic, outfile)
+        
+    return "fixed it"
+    
 
 #maak die cache dood!!!!
 @app.after_request
@@ -175,60 +124,82 @@ def getPMIDinfo():
     
     req_dic = request.args.to_dict()
     
-    req2_dic = {}
+    values = []
     
-    for key in req_dic.keys():
-        req2_dic[str(key)] = str(req_dic[key])
+    for key in req_dic.keys():    
+        waarde = req_dic[key]
+        values.append(waarde)
+      
+    """
+    query_piece1 =  """
+                    #SELECT articles_terms.articles_id
+                    #FROM articles_terms
+                    #INNER JOIN terms ON articles_terms.terms_id = terms.id
+                    #WHERE terms.mesh_term =  %s
+    """
+                    
+    query_paster = "AND articles_terms.articles_id IN ("
     
-    req_dic = req2_dic
+    
+    sel_query = query_piece1
+    
+    for term in values[1:]:
+        
+        sel_query += query_paster + query_piece1
+    
+    sel_query += len(values[1:])*")" + " LIMIT 25"
+        
+    cnx = mysql.connector.connect(user='owe8_pg1', 
+                                  password='blaat1234',
+                                  host='127.0.0.1',
+                                  db='owe8_pg1')   
+   
+    cursor = cnx.cursor()
+    
+    cursor.execute(sel_query,values)
+    rows = cursor.fetchall()
+       
+    id_list = [item for sublist in rows for item in sublist]
+    
+    id_string_list = []
+    for ID in id_list:
+        id_string_list.append(str(ID))
+        
     
     query = ""
-    
-    if 'Compound' in req_dic and 'Crop' in req_dic:
-        
-        query = ("SELECT compound.Abstracten_PMID, Abstracten.Titel FROM Abstracten_has_Compound as compound INNER JOIN Abstracten_has_Crop as crop on compound.Abstracten_PMID = crop.Abstracten_PMID INNER JOIN Abstracten on Abstracten.PMID = compound.Abstracten_PMID "
-                "WHERE compound.Compound_name = %(Compound)s AND crop.Crop_name = %(Crop)s")
-        
-    elif 'Compound' in req_dic and 'Health_benefit' in req_dic:
-        
-        query = ("SELECT compound.Abstracten_PMID, Abstracten.Titel FROM Abstracten_has_Compound as compound INNER JOIN Abstracten_has_Health_benefit as health on compound.Abstracten_PMID = health.Abstracten_PMID INNER JOIN Abstracten on Abstracten.PMID = compound.Abstracten_PMID "
-                "WHERE compound.Compound_name = %(Compound)s AND health.Health_benefit_name = %(Health_benefit)s")
-        
-    elif 'Crop' in req_dic and 'Health_benefit' in req_dic:
-        query = ("SELECT crop.Abstracten_PMID, Abstracten.Titel FROM Abstracten_has_Crop as crop INNER JOIN Abstracten_has_Health_benefit as health on crop.Abstracten_PMID = health.Abstracten_PMID INNER JOIN Abstracten on Abstracten.PMID = crop.Abstracten_PMID "
-                "WHERE crop.Crop_name = %(Crop)s AND health.Health_benefit_name = %(Health_benefit)s")
-        
+    if len(id_string_list) == 1:
+        query = id_string_list[0]
+    elif len(id_string_list) > 1:
+        query = ','.join(id_string_list)
     else:
-        pass
+        return "Oh dear, no articles found"
+    
+    Entrez.email = 'huub.goltstein@gmail.com'
+    handle = Entrez.esummary(db="pubmed", id=query, retmode="xml",retmax=25)
+    records = Entrez.parse(handle)
 
-    try:
-        cnx = mysql.connector.connect(user='owe8_pg1', password='blaat1234',
-                                      host='127.0.0.1',
-                                      db="owe8_pg1")
-        cursor = cnx.cursor()
-        cursor.execute(query,params=req_dic)
-        result = cursor.fetchall()
-        #lit lijstje met id's.
-        terug = ""
-        for (pmid, titel) in result:
-            terug += "<a href='"
-            terug += "https://www.ncbi.nlm.nih.gov/pubmed/" + str(pmid)
-            terug += "'>"
-            terug += str(titel)
-            terug += "</a><br /><br />"
-        return terug
-            
-        
-        
-    except Exception as e:
-        ret_string = str(e)
-        ret_string += "<<<<>>>>"
-        ret_string += query
-        ret_string += "<<<<>>>>"
-        ret_string += str(req_dic)
-        return ret_string
-    finally:
-        cursor.close()
-        cnx.close()
-        
-    return "wow wacht wat"
+    rijen = []
+    
+    for i,record in enumerate(records):
+        tupletje = id_string_list[i], record['Title'].encode('utf-8')
+        rijen.append(tupletje)
+    
+    
+    
+    color = ['red', 'orange', 'blue']
+    count = 0
+    terug = "<select style='margin: auto;'>"
+    
+    for pmid, titel in rijen:
+        terug += "<option style='background-color: {};' value='opel'><a href='https://www.ncbi.nlm.nih.gov/pubmed/{}'>{}</a></option>".format(color[count], pmid, titel)
+        count+=1
+    
+    terug += "</select>"
+       
+    """
+    pubmedURL = "<a href='https://www.ncbi.nlm.nih.gov/pubmed/?term=" + "+".join(values) + "' target='_blank'>" + " and ".join(values) + "</a>"
+    
+    
+    
+    linked = " with ".join(values)
+    return linked + "<br /><br />"+pubmedURL
