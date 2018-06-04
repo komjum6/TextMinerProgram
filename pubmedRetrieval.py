@@ -10,14 +10,16 @@ import time
 
 import mysql.connector
 
+#Functie voor het verkrijgen van connectie met de database
 def get_conn():
-    #HARDCODED WANT HAHA CYTOSINE
+    #Dit moet HARDCODED omdat de cytosine server dat vereist
     
     cnx = mysql.connector.connect(user='owe8_pg1', password='blaat1234',
                               host='127.0.0.1',
                               db='owe8_pg1')
     return cnx
 
+#Functie voor het ophalen van de data van ncbi pubmed en het retourneren van een lijst met resultaten.	
 def search_ids(query):
     Entrez.email = 'huub.goltstein@gmail.com'
     handle = Entrez.esearch(db='pubmed', 
@@ -53,6 +55,7 @@ def search_ids(query):
     print(len(id_lijst))
     return id_lijst
 
+#Functie voor het inserten van mesh termen bij de data entries (artikelen)
 def insert_term_articles(id_lijst, term, cnx):
     
     cursor = cnx.cursor()
@@ -71,7 +74,7 @@ def insert_term_articles(id_lijst, term, cnx):
    
     cursor.executemany(stmt, data)
     
-    
+#Functie voor het inserten van termen en hun metadata in de table 'terms'    
 def insert_term(term,term_type, cnx):
     
     cursor = cnx.cursor()
@@ -96,20 +99,19 @@ def insert_term(term,term_type, cnx):
     cnx.commit()
     return
     
-    
+#Functie voor het inserten van artikelen aan de hand van hun pubmedID     
 def insert_article(id_lijst,cnx):
     cursor = cnx.cursor()
     
     nieuw = [(int(pmid),) for pmid in id_lijst]
     
-    insert_stmt = "INSERT IGNORE INTO articles (PMID) VALUES (%s)"  #nobody cares if itś there already  
+    insert_stmt = "INSERT IGNORE INTO articles (PMID) VALUES (%s)"  #nobody cares if it is there already  
     cursor.executemany(insert_stmt,nieuw)
     
     return
 
+#Functie voor het stelselmatig aanroepen van de functies hierboven en kijken waar de woorden voorkomen
 def searcherino(term):
-    
-
     
     id_lijst = search_ids(term)
     
@@ -121,7 +123,4 @@ def searcherino(term):
         insert_term_articles(small,term,conn)
         print("at: ",i)
         conn.commit()
-    
-    
-    print("aw ye boi")
     

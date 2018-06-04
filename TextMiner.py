@@ -5,22 +5,22 @@ import traceback
 
 app = Flask(__name__)
 
-#De Root Map
+#De Root Map wordt gerenderd
 @app.route('/')
 def index():
     return render_template('index.html')
     
-#De plaats waar alles gevisualiseerd word
+#De plaats waar de graaf zich bevind wordt gerenderd
 @app.route('/visualisation')
 def visualisation():
     return render_template('visualisation.html')
 
-#De plaats voor contact info
+#De plaats voor contact info wordt gerenderd
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
 
-#Een plaats voor een introductie etc
+#Een plaats voor info over onze projectgroep wordt gerenderd
 @app.route('/about')
 def about():
     return render_template('about.html')
@@ -34,15 +34,11 @@ def internal_error(error):
     
     return str(error) +">>" + str(tb)
     
-
-
 #error 404 handling
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template('page_not_found.html'), 404
 	
-#Functie waar je ongein instouwt om een coole grafiek te kunnen genereren, potentieel AJAX
-
 #Functie waar je ongein instouwt om een coole grafiek te kunnen genereren, potentieel AJAX
 @app.route('/jsonstoreurl', methods = ['GET'])
 def jsonstoreurl():
@@ -102,7 +98,7 @@ def jsonstoreurl():
     return "fixed it"
     
 
-#maak die cache dood!!!!
+#Het negeren van de cache
 @app.after_request
 def add_header(r):
     """
@@ -119,6 +115,7 @@ def add_header(r):
 # group1 = Compound
 # group2 = Crop
 # group3 = Health_benefit	
+#De linkjes naar de artikelen worden gerenderd
 @app.route('/getPMIDinfo', methods=['GET'])
 def getPMIDinfo():
     
