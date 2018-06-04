@@ -15,6 +15,8 @@
 		<meta charset="UTF-8">
 		<!-- Site Title -->
 		<title>Textminer</title>
+		<!-- LogoTextMiner -->
+		<link rel="icon" href="{{ url_for('static', filename='img/logotextminer.png')}}">
 
 		<link rel="stylesheet" type ="text/css" href="https://fonts.googleapis.com/css?family=Poppins:100,200,400,300,500,600,700" > 
 		
@@ -52,12 +54,9 @@
 						<div class="banner-content col-lg-6 col-md-6">
 							<h1>Textminer</h1>
 							<p class="text-white text-uppercase">
-								Enter search terms in the bar
+								May the Gourd be with you
 							</p>
-						<div class="topnav">
-							<input type="text" placeholder="Search..">
-							<button type="submit"><i class="fa fa-search"></i></button>
-						</div>
+						
 						</div>
 						<div class="banner-img col-lg-6 col-md-6">
 							<img class="img-fluid" src="{{ url_for('static', filename ='img/banner-img.png')}}" alt=""/>
@@ -74,7 +73,33 @@
 						<div class="col-md-12 pb-40 header-text text-center">
 							<h1 class="pb-10">About the application</h1>
 							<p>
-								Random info
+								This application is able to search relevant pubmed articles based on search terms that you want. <br>
+								The application will search through pubmed articles looking for articles that have relevance with the terms you entered.<br>
+								After searching through their database the application will visualize all the found articles and relations between them in a node graph.
+							</p>
+							<h2>Lost Functionality</h2>
+							
+							<p>
+								A feature had to be dropped due to a classificationproblem.
+								The BIG Question was: how can one classify nouns mined with the application?
+								So how can one tell if a noun is either an organism, a compound or a health benefit?
+								Our approach was to ask a database of compounds whether a noun is a compound.
+								That worked rather well, but when it's scaled up to 10,000 nouns and you have to ask the database that many times...
+								Let's say it's estimated to take half a day or even longer. And that's the case everytime the user gives an input (searchword). 
+								We wish we had a way to make this faster, because we would have had a list of all compounds and their descriptions, and we would have been able to relate them all to each other.
+								In the end we had to downgrade and we're still sad about it. If there only was a way to classify faster.
+								We looked into Machine Learning to classify the words, but it would take too long and it would have been hard to get testdata for an AI to train on.
+							</p>
+							<img style="width:300px;height:300px;display:block;margin-left:auto;margin-right:auto;border-radius:150px;", src="{{ url_for('static', filename='img/logotextminer.png')}}">
+							<br><br><br>
+							<h2>Our Vision</h2>
+							<p>
+								We wanted to use as little processing power off the server as possible.
+								While we were at it, we discovered that the server was the limiting factor.
+								We didn't fancy using the server to fill the database for hours because there was 
+								a riskfactor that we would have to try again and again. 
+								We settled for a basic approach for filling our database which was good enough in our opinion.
+								That still meant making a big database though...
 							</p>
 						</div>
 					</div>	

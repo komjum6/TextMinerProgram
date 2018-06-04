@@ -99,15 +99,12 @@ function connTo(node) {
 	return 0
 	}
 	
-	selectedNodes = node.id
-	
+	selectedNodes.push(node);
 	
 	var derp = {}
-	derp[node.id] = 1
+	//derp[node.id] = 1
     
-    console.log(linkedByIndex)
-    
-    
+    console.log("ik werk")
     
     g.each(function(d) {
         
@@ -137,10 +134,8 @@ function connTo(node) {
         if (!(derp[d.source.id]) || !(derp[d.target.id])){
         
             d3.select(this).style("visibility","hidden");
-        }    
-        
+        }        
     });
-
 }
 
 function linkClick( linkx ) {
@@ -149,7 +144,12 @@ function linkClick( linkx ) {
 	
      //d3.select('h1').text(linkx.source.id + ":reee:"+linkx.target.id)
 	 
-	 loadDoc(x,y)
+	 var lijst = [];
+	 lijst.push(x);
+	 lijst.push(y);
+	 lijst = lijst.concat(selectedNodes);
+	 
+	 loadDoc(lijst)
 	 
     }
 
@@ -158,7 +158,7 @@ function linkClick( linkx ) {
 // group1 = Compound
 // group2 = Crop
 // group3 = Health_benefit	
-function loadDoc(node1, node2) {
+function loadDoc(lijst) {
 	
   var abs_url = "http://cytosine.nl/~owe8_pg1/Clickme.wsgi/getPMIDinfo"
 	
@@ -168,14 +168,22 @@ function loadDoc(node1, node2) {
       
 	  document.getElementById("linkPlace").innerHTML = this.responseText;
 	  
-	  
     }
   };
     
-  var1 = node1.id
-  var2 = node2.id
+    var arrayLength = lijst.length;
+    
+    var var_str = "?0=" + lijst[0].id; 
+    
+    for (var i = 1; i < arrayLength; i++) {
+        var_str += "&" + i + "=" + lijst[i].id
+    //Do something
+    }  
+    
+  //var1 = node1.id
+  //var2 = node2.id
   
-  var var_str = "?1=" + var1 + "&2=" + var2;
+  //var var_str = "?1=" + var1 + "&2=" + var2;
   
   xhttp.open("GET", abs_url+var_str, true);
   
@@ -212,9 +220,41 @@ function dragended(d) {
 }
 
 function lineWidth(i){
-    return 2 * (Math.log(i) / Math.log(10)) + 2;
+    return (Math.log(i) / Math.log(10)) + 4;
 
 }
 var svgtje = document.getElementsByTagName("svg")[0];
 svgtje.style.borderStyle = "solid";
+
+function restore(){
+
+selectedNodes = [];
+//alert("reee");
+var linez = d3.select("svg").select(".links").selectAll("line");
+var nodez = d3.select("svg").select(".nodes").selectAll("g");
+
+nodez.each(function(d){ 
+    
+    d3.select(this).style("visibility", "visible");
+    
+ });
+ 
+linez.each(function(d){ 
+    
+    d3.select(this).style("visibility", "visible");
+    
+ });
+
+}
+
+window.onload = function() {
+    document.getElementById("returnButton").onclick = function fun() {
+        restore();
+        //validation code to see State field is mandatory.  
+    }
+}
+
+
+
+
 }

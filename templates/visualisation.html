@@ -15,6 +15,8 @@
 		<meta charset="UTF-8">
 		<!-- Site Title -->
 		<title>Textminer</title>
+		<!-- LogoTextMiner -->
+		<link rel="icon" href="{{ url_for('static', filename='img/logotextminer.png')}}">
 		<style>
 		.links line {
       stroke: #999;
@@ -77,15 +79,16 @@
 					<div class="row d-flex justify-content-center">
 						<div class="col-md-12 pb-40 header-text text-center">
 							<h1 class="pb-10">Here the node graph</h1>
+							
 							<p>
 								<svg width="960" height="600"></svg>
 
 	
                         	<script src="https://d3js.org/d3.v4.min.js"></script>
                         	<script type="text/javascript" src="{{ url_for('static', filename='javascript/script.js') }}"></script>
-                        	<script> var selectedNodes = []; litteShit(); </script> <!-- cropcompound of compoundhealthbenefit of crophealthbenefit  !-->
 							</p>	
-
+							<button type="button" id="returnButton">Return Original Graph</button><br><br>
+							<script> selectedNodes = []; litteShit(); </script> <!-- cropcompound of compoundhealthbenefit of crophealthbenefit  !-->
 							<h2 id="linkPlace"> "such link"
 							</h2>
 						</div>

@@ -33,8 +33,6 @@ def internal_error(error):
     tb = traceback.extract_tb(tbo)
     
     return str(error) +">>" + str(tb)
-    
-
 
 #error 404 handling
 @app.errorhandler(404)
@@ -43,7 +41,9 @@ def page_not_found(error):
 	
 #Functie waar je ongein instouwt om een coole grafiek te kunnen genereren, potentieel AJAX
 
-#Functie waar je ongein instouwt om een coole grafiek te kunnen genereren, potentieel AJAX
+#Functie waar je ongein instouwt om een coole grafiek te kunnen genereren,
+#Momenteel slaat deze het op in een data.json bestand omdat het uitvoeren van deze taak 
+#Zeer CPU intensief is en daarom het liefst zo min mogelijk gerunt dient te worden
 @app.route('/jsonstoreurl', methods = ['GET'])
 def jsonstoreurl():
     
@@ -53,7 +53,7 @@ def jsonstoreurl():
                                   db="owe8_pg1")
     
     dic = {}
-    thickest = 1
+    thickest = 1 #voor het bepalen van lijn diktes
     
     dic["nodes"] = []
     dic["links"] = []
@@ -61,6 +61,11 @@ def jsonstoreurl():
     cursor = cnx.cursor()
         
         #overly intesive, moet geoptimaliseerd worden.
+        #Omdat we elk artikel opvragen dat er mee te maken hebben en niet duidelijk genoeg gedefineert hebben dat het per se
+        #iets te maken moet hebben met yams of bitter gourds, is de tussentabel gigantisch waardoor hij zeer sloom is
+        #alle 6 de inner joins zijn nodig, maar de self join is gewoon zeer pittig om uit te voeren door het formaat van deze tabel
+        #Om dit sneller te krijgen zou het beste eerst een query uitgevoert kunnen worden die alle artikelen ophaalt die iets te maken hebben
+        #met de planten van interesse: Bitter gourd en Yam, maar de afgelopen dagen was cytosine te instabiel om goed te testen.
     sel_query = """
                 SELECT COUNT( * ) , tt1.id, tt2.id, t1.mesh_term, t2.mesh_term
                 FROM term_type AS tt1
@@ -73,18 +78,18 @@ def jsonstoreurl():
                 GROUP BY at1.terms_id, at2.terms_id
                 """
                 
-    cursor.execute(sel_query)
+    cursor.execute(sel_query) 
     fetchall = cursor.fetchall()
     
     for a in fetchall:
-        dickie = {"source" : a[3] , "target" : a[4], "value" : int(a[0])}
+        dickie = {"source" : a[3] , "target" : a[4], "value" : int(a[0])} #aanmaken van alle lijnen
         thickest = min(thickest,a[0])  
         
-        node = {"id" : a[3], "group" : a[1]}
+        node = {"id" : a[3], "group" : a[1]} #nodes van links
         if node not in dic["nodes"]:
             dic["nodes"].append(node)
         
-        node = {"id" : a[4], "group" : a[2]}
+        node = {"id" : a[4], "group" : a[2]} #nodes van rechts
         if node not in dic["nodes"]:
             dic["nodes"].append(node) 
         
@@ -96,13 +101,15 @@ def jsonstoreurl():
     cursor.close()
     cnx.close()
     
-    with open('/home/owe8_pg1/public_html/static/javascript/data.json', 'w') as outfile:
+    with open('/home/owe8_pg1/public_html/static/javascript/data.json', 'w') as outfile: #schrijf naar die file
         json.dump(dic, outfile)
         
-    return "fixed it"
+    return "did it" #succes message
     
 
-#maak die cache dood!!!!
+#Toegevoegd om te proberen hiermee de cache te omzeilen en alles te slopen,
+#geen idee of het iets van nut heeft aangezien we niet bij de logs kunnen
+#nog debug informatie kunnen opvragen of bij de settings van de apache webserver kunnen
 @app.after_request
 def add_header(r):
     """
@@ -119,6 +126,8 @@ def add_header(r):
 # group1 = Compound
 # group2 = Crop
 # group3 = Health_benefit	
+#Deze functie wordt ook niet meer gebruikt omdat de functionaliteit verplaatst is naar de javascript,
+#Dit om cytosine met rust te laten en de gebruiker zijn computer al het werk te laten doen.
 @app.route('/getPMIDinfo', methods=['GET'])
 def getPMIDinfo():
     
@@ -130,76 +139,7 @@ def getPMIDinfo():
         waarde = req_dic[key]
         values.append(waarde)
       
-    """
-    query_piece1 =  """
-                    #SELECT articles_terms.articles_id
-                    #FROM articles_terms
-                    #INNER JOIN terms ON articles_terms.terms_id = terms.id
-                    #WHERE terms.mesh_term =  %s
-    """
-                    
-    query_paster = "AND articles_terms.articles_id IN ("
-    
-    
-    sel_query = query_piece1
-    
-    for term in values[1:]:
-        
-        sel_query += query_paster + query_piece1
-    
-    sel_query += len(values[1:])*")" + " LIMIT 25"
-        
-    cnx = mysql.connector.connect(user='owe8_pg1', 
-                                  password='blaat1234',
-                                  host='127.0.0.1',
-                                  db='owe8_pg1')   
-   
-    cursor = cnx.cursor()
-    
-    cursor.execute(sel_query,values)
-    rows = cursor.fetchall()
-       
-    id_list = [item for sublist in rows for item in sublist]
-    
-    id_string_list = []
-    for ID in id_list:
-        id_string_list.append(str(ID))
-        
-    
-    query = ""
-    if len(id_string_list) == 1:
-        query = id_string_list[0]
-    elif len(id_string_list) > 1:
-        query = ','.join(id_string_list)
-    else:
-        return "Oh dear, no articles found"
-    
-    Entrez.email = 'huub.goltstein@gmail.com'
-    handle = Entrez.esummary(db="pubmed", id=query, retmode="xml",retmax=25)
-    records = Entrez.parse(handle)
-
-    rijen = []
-    
-    for i,record in enumerate(records):
-        tupletje = id_string_list[i], record['Title'].encode('utf-8')
-        rijen.append(tupletje)
-    
-    
-    
-    color = ['red', 'orange', 'blue']
-    count = 0
-    terug = "<select style='margin: auto;'>"
-    
-    for pmid, titel in rijen:
-        terug += "<option style='background-color: {};' value='opel'><a href='https://www.ncbi.nlm.nih.gov/pubmed/{}'>{}</a></option>".format(color[count], pmid, titel)
-        count+=1
-    
-    terug += "</select>"
-       
-    """
     pubmedURL = "<a href='https://www.ncbi.nlm.nih.gov/pubmed/?term=" + "+".join(values) + "' target='_blank'>" + " and ".join(values) + "</a>"
-    
-    
     
     linked = " with ".join(values)
     return linked + "<br /><br />"+pubmedURL

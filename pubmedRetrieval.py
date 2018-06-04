@@ -7,20 +7,15 @@ Created on Tue May 15 11:31:14 2018
 """
 from Bio import Entrez
 import time
+from database import get_conn,insert_article,insert_term_articles
 
-import mysql.connector
-
-def get_conn():
-    #HARDCODED WANT HAHA CYTOSINE
-    
-    cnx = mysql.connector.connect(user='owe8_pg1', password='blaat1234',
-                              host='127.0.0.1',
-                              db='owe8_pg1')
-    return cnx
-
+#Functie die alle pubmed identifiers ophaalt bij een query
+#Doordat NCBI het niet fijn vindt als je tijdens werkuren teveel stress oplevert
+#zitten er een paar time.sleeps(1) in, deels om NCBI te ontlasten en deels om
+#op cytosine minder belastend te zijn en zo te vermijden dat je process gekilled wordt #hacks
 def search_ids(query):
     Entrez.email = 'huub.goltstein@gmail.com'
-    handle = Entrez.esearch(db='pubmed', 
+    handle = Entrez.esearch(db='pubmed', #ophalen van de grootte van de vraag
                             sort='relevance', 
                             retmax='0',
                             retmode='xml', 
@@ -35,7 +30,7 @@ def search_ids(query):
     
     id_lijst = []
     
-    batch_size = 10000
+    batch_size = 10000 #vraag de XML op in batches van 10.000 en het zijn alleen de ID's
     
     for i in range(0,amount_of_hits,batch_size):
         Entrez.email = 'huub.goltstein@gmail.com'
@@ -53,63 +48,12 @@ def search_ids(query):
     print(len(id_lijst))
     return id_lijst
 
-def insert_term_articles(id_lijst, term, cnx):
-    
-    cursor = cnx.cursor()
-        
-    sel_query =     """
-                    SELECT id FROM terms
-                    WHERE mesh_term = %s         
-                    """
-    
-    cursor.execute(sel_query,(term,))
-    term_id = cursor.fetchall()[0][0]
-    
-    data = [(article_id.encode('utf-8'),term_id) for article_id in id_lijst]
-    
-    stmt = "INSERT IGNORE INTO articles_terms (articles_id, terms_id) VALUES (%s, %s)"
-   
-    cursor.executemany(stmt, data)
-    
-    
-def insert_term(term,term_type, cnx):
-    
-    cursor = cnx.cursor()
-        
-    sel_query = """
-                SELECT id FROM term_type
-                WHERE term_type = %s         
-                """
-                    
-    cursor.execute(sel_query,term_type)
-    term_type_id = cursor.fetchall()[0][0]
-    
-    sel_query = """
-                SELECT MAX(id) FROM terms
-                """
-    cursor.execute(sel_query)
-    term_id = int(cursor.fetchall()[0][0])+1
-    
-    stmt = "INSERT INTO terms (id	,mesh_term,	term_type_id) VALUES (%s,%s,%s)"
-    data = (term_id, term, term_type_id)
-    cursor.execute(stmt,data)
-    cnx.commit()
-    return
-    
-    
-def insert_article(id_lijst,cnx):
-    cursor = cnx.cursor()
-    
-    nieuw = [(int(pmid),) for pmid in id_lijst]
-    
-    insert_stmt = "INSERT IGNORE INTO articles (PMID) VALUES (%s)"  #nobody cares if itś there already  
-    cursor.executemany(insert_stmt,nieuw)
-    
-    return
 
-def searcherino(term):
-    
-
+#Functie voor het vinden van alle artikelen die iets te maken hebben met de zoekterm en 
+#deze op te slaan in de database, hij is voor de aanroep van een developer omdat bij het halverwege misgaan van deze functie
+#door omstandigheden de database niet meer stabiel is, dit omdat het committen van zoveel veranderingen tegelijk de server voor een verlengde
+#tijd unresponsive maakt en op een gedeelde server je dit niet kan maken naar de andere gebruikers toe
+def search(term):
     
     id_lijst = search_ids(term)
     
@@ -121,7 +65,5 @@ def searcherino(term):
         insert_term_articles(small,term,conn)
         print("at: ",i)
         conn.commit()
-    
-    
-    print("aw ye boi")
-    
+      
+    print("finished")
