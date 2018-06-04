@@ -93,11 +93,21 @@ d3.json(abs_url, function(error, graph) {
 
 function connTo(node) {
 	var g = d3.select("svg").select(".links").selectAll("line");
+	var ding = d3.select(".pb-10")
+	
+	if (selectedNodes.length > 0){
+	return 0
+	}
+	
+	selectedNodes = node.id
+	
 	
 	var derp = {}
 	derp[node.id] = 1
     
     console.log(linkedByIndex)
+    
+    
     
     g.each(function(d) {
         
@@ -109,7 +119,6 @@ function connTo(node) {
             derp[d.source.id] = 1
         }
         
-    	
     });
     
     d3.select("svg").select(".nodes").selectAll("g").each(function(item,index){
@@ -128,8 +137,7 @@ function connTo(node) {
         if (!(derp[d.source.id]) || !(derp[d.target.id])){
         
             d3.select(this).style("visibility","hidden");
-        }
-            
+        }    
         
     });
 
