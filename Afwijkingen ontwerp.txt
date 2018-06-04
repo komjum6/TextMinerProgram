@@ -5,18 +5,23 @@
 Bestanden
 
 - pubmedRetrieval.py staat los van TextDataprocessing.py, dus er is een extra pythonbestand
+- De database uploaden en downloaden splitsen in aparte bestanden levert Ravioli code op en
+zorgt niet voor meer duidelijkheid.
 Packages
 
 -pubchempy werd gebruikt als package. Dit was gedaan om te zoeken naar naar compounds, maar het duurde te lang om veel compunds te zoeken en is dus verwijderd.
 -Selenium en Beautifulsoup zijn eruit gehaald vanwege het feit dat deze afhankelijk zijn van een constante staat van de pubmed ncbi website (bij een update komen er problemen). 
 Ook wordt de feature niet meer gesupport door ons omdat het cross-browser zou moeten worden gemaakt met if statements of een alternatieve manier die we nou dus niet uit gaan zoeken. De officiele API wordt gebruikt.
 - Geen gebruik meer van matplotlib in textdataprocessing. Hier is voor gekozen omdat het niet nodig bleek te zijn voor de applicatie
+-NLTK wordt zelfs niet meer gebruikt om het zo snel mogelijk te laten runnen maar dit bleek door hardware limitaties ook niet realistisch te zijn
 
 
 Database
 
-De database is volledig gewijzigd.
-Dit is gedaan omdat cytosine een slechte server is met weinig kracht en het dus niet mogelijk maakt om makkelijk veel data op te slaan.
+Het ERD is verandert omdat het gebruiken van 3 verschillende tabellen voor Health_benefits, compounds en crops een extreme hoeveelheid overhead met zich mee bracht om de
+queries zo te schrijven dat alle combinaties tussen de tabellen, e.g compounds<->crops, crops<->crops etc gelijkwaardig opgevraagt konden worden en omdat deze tabellen
+ook exact dezelfde waarden bevaten (Name) is ervoor gekozen om deze tabellen samen te voegen, verder is gekozen een ID toe te voegen omdat de many-many tabel extreem
+groot zou worden als heel pubmed gemined zou worden, wat achteraf te hoopvol was en problemen oplevert bij de verwerking van de data in een reele tijd.
 
 Tabellen toegevoegd:
 term_type: voor het aangeven van welk van de 3 type's het is van compound/health benefit/crop
@@ -32,3 +37,8 @@ crop
 abstracten_has_health_Benefit
 abstracten_has_compound
 abstracten_has_crop
+
+Known Bugs:
+het genereren van de json kost veel tijd omdat de query hiervoor over een te grote tabel gaat, dit kan gefixed worden door deze query te herschrijven zodat alleen een subset van de data verwerkt hoeft te worden
+e.g alleen artikelen die een relatie hebben met "momordica charantia"  en "yams" door hier bijvoorbeeld een view voor aan te leggen.
+De query bevat een self join en 4 INNER JOINS welke allemaal nodig zijn om de overlappende artikelen te bepalen en de bijbehorende termen en term_types.
