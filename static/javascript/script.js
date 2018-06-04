@@ -1,6 +1,4 @@
 function litteShit() {
-// lijntjes clickbaar maken - > ajaxrequest -> pubmed artikelen -> artikelen requesten
-// nodes clickbaar maken ->  pubmed artikelen 
 
     var svg = d3.select("svg"),
     width = +svg.attr("width"),
@@ -16,10 +14,9 @@ function litteShit() {
 
     var linkedByIndex = {};
     
-
+    //hardcoded de url van de json, omdat het berekenen van de inhoud hiervan cytosine intens belast
     var abs_url = "http://cytosine.nl/~owe8_pg1/static/javascript/data.json"
     
-
 d3.json(abs_url, function(error, graph) {
   if (error) throw error;
 
@@ -44,9 +41,7 @@ d3.json(abs_url, function(error, graph) {
       .call(d3.drag()
           .on("start", dragstarted)
           .on("drag", dragged)
-          .on("end", dragended));
-
-		  
+          .on("end", dragended));	  
 
   var lables = node.append("text")
       .text(function(d) {
@@ -65,7 +60,7 @@ d3.json(abs_url, function(error, graph) {
  simulation.force("link")
       .links(graph.links);
       
-     
+    // het aanmaken van een dictionary set achtig object om te bepalen of nodes buren van elkaar zijn.
     for (i = 0; i < graph.nodes.length; i++) {
     linkedByIndex[graph.nodes[i].id + "," + graph.nodes[i].id] = 1;
     };
@@ -77,7 +72,7 @@ d3.json(abs_url, function(error, graph) {
     return linkedByIndex[a.index + "," + b.index];
     }
     
-   function ticked() {
+   function ticked() { //functie voor het verplaatsen van nodes
     link
         .attr("x1", function(d) { return d.source.x; })
         .attr("y1", function(d) { return d.source.y; })
@@ -91,9 +86,13 @@ d3.json(abs_url, function(error, graph) {
   }
 });
 
+//Functie voor het verbergen van alle nodes die geen verbinding hebben met de node die geselecteerd is
+//Dit als een soort pseudo filtering die niet CPU intensief is, ook al is deze niet volledig correct volgens set-theorie
+//Maar over het algemeen kan hier toch nuttige informatie uit gewonnen worden omdat bij datasets van dit formaat
+//het alleen bij zeer obscure situaties optreed dat er niet minimaal 1 artikel bestaat waarin alle 3 de termen zitten
 function connTo(node) {
 	var g = d3.select("svg").select(".links").selectAll("line");
-	var ding = d3.select(".pb-10")
+	var pb10 = d3.select(".pb-10")
 	
 	if (selectedNodes.length > 0){
 	return 0
@@ -101,40 +100,31 @@ function connTo(node) {
 	
 	selectedNodes = node.id
 	
-	
-	var derp = {}
-	derp[node.id] = 1
-    
-    console.log(linkedByIndex)
-    
-    
-    
-    g.each(function(d) {
+	var nodeDic = {}
+   
+    g.each(function(d) { //loopen over alle lines om te bepalen welke verbonden aan welke zijn
         
-        
-    	if (d.source == node && !(derp[d.target])){
-        	derp[d.target.id] = 1
+    	if (d.source == node && !(nodeDic[d.target])){
+        	nodeDic[d.target.id] = 1
         }
-        if (d.target == node && !(derp[d.source])){
-            derp[d.source.id] = 1
+        if (d.target == node && !(nodeDic[d.source])){
+            nodeDic[d.source.id] = 1
         }
         
     });
     
-    d3.select("svg").select(".nodes").selectAll("g").each(function(item,index){
+    d3.select("svg").select(".nodes").selectAll("g").each(function(item,index){ //loopen over alle nodes
     
-        if (!(derp[item.id])){
-            
-            console.log(item.id)
-            console.log(derp)
+        if (!(nodeDic[item.id])){
+
             d3.select(this).style("visibility", "hidden");
         }    
     
     });
     
-    g.each(function(d){   
+    g.each(function(d){ //nogmaals lopen over alle lines om verbindingen potentieel weg te halen
         
-        if (!(derp[d.source.id]) || !(derp[d.target.id])){
+        if (!(nodeDic[d.source.id]) || !(nodeDic[d.target.id])){
         
             d3.select(this).style("visibility","hidden");
         }    
@@ -142,23 +132,18 @@ function connTo(node) {
     });
 
 }
-
+//Functie voor het klikken op linkjes als actionlistener om de source en target te bepalen
 function linkClick( linkx ) {
 	var x = linkx.source
 	var y = linkx.target
-	
-     //d3.select('h1').text(linkx.source.id + ":reee:"+linkx.target.id)
 	 
 	 loadDoc(x,y)
 	 
     }
 
-	
-	
-// group1 = Compound
-// group2 = Crop
-// group3 = Health_benefit	
-function loadDoc(node1, node2) {
+//Functie voor het generen van een link naar pubmed met daarin de artikelen die relateren aan deze termen,
+//Pubmed is bekend voor de bioloog en bevat een zeer goede mogelijkheid tot het sorteren van artikelen.
+function loadDoc(lijst) {
 	
   var abs_url = "http://cytosine.nl/~owe8_pg1/Clickme.wsgi/getPMIDinfo"
 	
@@ -172,13 +157,15 @@ function loadDoc(node1, node2) {
     }
   };
     
-  var1 = node1.id
-  var2 = node2.id
-  
-  var var_str = "?1=" + var1 + "&2=" + var2;
-  
+    var arrayLength = lijst.length;
+    
+    var var_str = "?0=" + lijst[0].id; 
+    
+    for (var i = 1; i < arrayLength; i++) {
+        var_str += "&" + i + "=" + lijst[i].id
+    }  
+ 
   xhttp.open("GET", abs_url+var_str, true);
-  
   xhttp.send();
 }
 
@@ -210,11 +197,38 @@ function dragended(d) {
   d.fy = Math.max(0, d.fy);
   d.fy = Math.min(595, d.fy);
 }
-
+//Functie voor het bepalen van de dikte van de lijnen
 function lineWidth(i){
     return 2 * (Math.log(i) / Math.log(10)) + 2;
 
 }
 var svgtje = document.getElementsByTagName("svg")[0];
 svgtje.style.borderStyle = "solid";
+
+//functie voor het herstellen van de grafiek naar de originele variant door alles weer zichtbaar te maken
+function restore(){
+
+selectedNodes = [];
+var linez = d3.select("svg").select(".links").selectAll("line");
+var nodez = d3.select("svg").select(".nodes").selectAll("g");
+
+nodez.each(function(d){ 
+    
+    d3.select(this).style("visibility", "visible");
+    
+ });
+ 
+linez.each(function(d){ 
+    
+    d3.select(this).style("visibility", "visible");
+    
+ });
+
+}
+
+window.onload = function() {
+    document.getElementById("returnButton").onclick = function fun() {
+        restore(); 
+    }
+}
 }
