@@ -1,17 +1,22 @@
 #Veranderingen aan het originele ontwerp
 
-- overerving die in het ontwerp is gebruikt komt niet meer overeen met de huidige applicatie
+Overerving en UML
+
+- Overerving die in het ontwerp is gebruikt komt niet meer overeen met de huidige applicatie
 
 Bestanden
 
-- pubmedRetrieval.py staat los van TextDataprocessing.py, dus er is een extra pythonbestand
+- pubmedRetrieval.py komt er bij
+- Veel van de andere geplande pythonbestanden zijn komen te vervallen na een herstructurering.
+
 Packages
 
 -pubchempy werd gebruikt als package. Dit was gedaan om te zoeken naar naar compounds, maar het duurde te lang om veel compunds te zoeken en is dus verwijderd.
+
 -Selenium en Beautifulsoup zijn eruit gehaald vanwege het feit dat deze afhankelijk zijn van een constante staat van de pubmed ncbi website (bij een update komen er problemen). 
 Ook wordt de feature niet meer gesupport door ons omdat het cross-browser zou moeten worden gemaakt met if statements of een alternatieve manier die we nou dus niet uit gaan zoeken. De officiele API wordt gebruikt.
-- Geen gebruik meer van matplotlib in textdataprocessing. Hier is voor gekozen omdat het niet nodig bleek te zijn voor de applicatie
 
+- Geen gebruik meer van matplotlib in textdataprocessing. Hier is voor gekozen omdat het niet nodig bleek te zijn voor de applicatie
 
 Database
 
