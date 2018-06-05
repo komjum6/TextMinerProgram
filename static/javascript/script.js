@@ -98,9 +98,10 @@ function connTo(node) {
 	return 0
 	}
 	
-	selectedNodes.push(node);
-	
+	pb10.text(node.id);
+
 	var nodeDic = {}
+	nodeDic[node.id] = 1 //niet verwijderen zichzelf
    
     g.each(function(d) { //loopen over alle lines om te bepalen welke verbonden aan welke zijn
         
@@ -225,6 +226,13 @@ linez.each(function(d){
     d3.select(this).style("visibility", "visible");
     
  });
+
+	var pb10 = d3.select(".pb-10");
+
+	
+	pb10.text("Here the node graph");
+
+ 
 
 }
 

@@ -2,6 +2,8 @@ from flask import Flask, render_template, request
 import json
 import mysql.connector
 import traceback
+import database
+from pubmedRetrieval import search_domain
 
 app = Flask(__name__)
 
@@ -123,23 +125,48 @@ def add_header(r):
     return r
 
 
-# group1 = Compound
-# group2 = Crop
-# group3 = Health_benefit	
-#Deze functie wordt ook niet meer gebruikt omdat de functionaliteit verplaatst is naar de javascript,
-#Dit om cytosine met rust te laten en de gebruiker zijn computer al het werk te laten doen.
+
 @app.route('/getPMIDinfo', methods=['GET'])
 def getPMIDinfo():
     
-    req_dic = request.args.to_dict()
-    
-    values = []
-    
-    for key in req_dic.keys():    
-        waarde = req_dic[key]
-        values.append(waarde)
-      
-    pubmedURL = "<a href='https://www.ncbi.nlm.nih.gov/pubmed/?term=" + "+".join(values) + "' target='_blank'>" + " and ".join(values) + "</a>"
-    
-    linked = " with ".join(values)
-    return linked + "<br /><br />"+pubmedURL
+    try:
+        req_dic = request.args.to_dict()
+        
+        
+        
+        values = []
+        waarde = ""
+        
+        for key in req_dic.keys():    
+            waarde = req_dic[key]
+            values.append(waarde)
+        
+        if len(values) > 1:
+        
+            cnx = database.get_conn()    
+            pmid_title_list = database.get_overlap_pmid_title(values[0],values[1],cnx)
+            
+            question = " AND ".join((values[0],values[1],))
+            basic = search_domain() + " AND " + question
+            
+            cnx.close()        
+            terug = "<a href='https://www.ncbi.nlm.nih.gov/pubmed/?term={}' target='_blank'>{}</a>".format(basic,question)
+            terug = terug.replace("[","%5B").replace("]","%5D")
+            terug += "<br />"
+            terug += "<table>"
+            terug += "<tr><th>Pubmed ID</th><th>Title</th></tr>"
+            
+            for pmid,title in pmid_title_list:
+                terug += "<tr>"
+                
+                terug += "<td>{}</td><td><a href='https://www.ncbi.nlm.nih.gov/pubmed/{}' target='_blank'>{}</a></td>".format(str(pmid),str(pmid), title.encode('utf-8'))
+                
+                terug += "</tr>"
+              
+            terug += "</table>"
+            return terug
+            
+        else:
+            return "ERROR"
+    except Exception as e:
+        return str(e)

@@ -38,6 +38,89 @@ def insert_term_articles(id_lijst, term, cnx):
    
     cursor.executemany(stmt, data)
     
+    
+def set_mined_variable(boolean,mesh_term,cnx):
+    
+    update_query = """
+                    UPDATE terms
+                    SET finished_mining=%s
+                    WHERE mesh_term = %s
+                    """
+    
+    cursor = cnx.cursor()
+    
+    cursor.execute(update_query,(boolean,mesh_term))
+    cnx.commit()
+    cursor.close()
+    
+
+    
+#vind alle termen die nog niet gemined zijn
+def get_unmined_terms(cnx):
+    
+    
+    terms = [] 
+    sel_query = """
+                SELECT mesh_term
+                FROM terms
+                WHERE finished_mining = FALSE
+                """
+                
+    cursor = cnx.cursor()
+    cursor.execute(sel_query)
+    
+    rows = cursor.fetchall()
+    
+    for row in rows:
+        terms.append(row[0])
+    
+    cursor.close()
+    return terms
+
+def get_article_pmids(cnx):
+    
+    pmid_list = []
+    
+    sel_query = """
+                SELECT PMID
+                FROM articles
+                WHERE title IS NULL
+                """
+                
+    cursor = cnx.cursor()
+    
+    cursor.execute(sel_query)
+    
+    for row in cursor.fetchall():
+        pmid_list.append(row[0])
+        
+    cursor.close()
+    return pmid_list
+
+
+def get_overlap_pmid_title(term1,term2,cnx):
+    
+    sel_query = """
+                SELECT articles.PMID, articles.title
+                FROM articles_terms AS at1
+                INNER JOIN articles_terms AS at2 ON at1.articles_id = at2.articles_id
+                INNER JOIN terms AS t1 ON at1.terms_id = t1.id
+                INNER JOIN terms AS t2 ON at2.terms_id = t2.id
+                INNER JOIN articles ON at1.articles_id = articles.PMID
+                WHERE t1.mesh_term =  %s
+                AND t2.mesh_term =  %s
+                """
+                
+    cursor = cnx.cursor()
+    cursor.execute(sel_query,(term1,term2))
+    
+    id_lijst = []
+    
+    for row in cursor.fetchall():
+        id_lijst.append(row[0:2])
+    
+    return id_lijst
+    
 
 # het inserteren van terms in de database
 # Deze functie was bedoeld om te ondersteunen dat de gebruiker dingen in de database kan inserteren voor latere verwerking
