@@ -7,8 +7,7 @@ Created on Tue May 15 11:31:14 2018
 """
 from Bio import Entrez
 import time
-from database import get_conn,insert_article,insert_term_articles,get_unmined_terms, set_mined_variable, get_article_pmids
-
+from database import get_conn,insert_article,insert_term_articles,get_unmined_terms, set_mined_variable
 
 #Hier staat vrij hardcoded, het domein van pubmed met daarin alle artikelen die ofwel over bitter gourd ofwel over yams gaan
 #Omdat het zoeken op alle data op NCBI zeker voor termen als "sugars" veel te intensief is,
@@ -65,6 +64,10 @@ def search_ids(query):
     print(len(id_lijst))
     return id_lijst   
 
+#Functie voor het ophalen van titels uit de database aan de hand van de lijst met ID's die meegelevert wordt
+#gebruikt de esummary functionaliteit van NCBI  -> https://www.ncbi.nlm.nih.gov/books/NBK25499/#_chapter4_ESummary_
+#Dit omdat hierbij niet alle XML data of Medline of iets dergelijks opgehaalt hoeft te worden en het download/uploaden minder
+#last oplevert voor andere gebruikers.
 def get_titels(id_lijst):
     
     pmid_title_list = []
@@ -79,26 +82,6 @@ def get_titels(id_lijst):
         pmid_title_list.append((title,ids))
         
     return pmid_title_list
-    
-
-def fill_article_titles():
-    conn = get_conn()
-    
-    pmid_list = get_article_pmids(conn)
-    
-    insert_list = get_titels(pmid_list)
-    
-    cursor = conn.cursor()
-    
-    update_query = """
-                    UPDATE articles
-                    SET title=%s
-                    WHERE PMID = %s
-                    """
-    
-    cursor.executemany(update_query,insert_list)
-    conn.commit()
-    print("finished inserting article titles")
 
 #Functie voor het vinden van alle artikelen die iets te maken hebben met de zoekterm en 
 #deze op te slaan in de database, hij is voor de aanroep van een developer omdat bij het halverwege misgaan van deze functie
@@ -113,14 +96,15 @@ def search():
         print("doing term: ",term)
         id_lijst = search_ids(term)
         
-        for i in range(0,len(id_lijst),1000):
+        for i in range(0,len(id_lijst),1000): #batches van 1000 om regelmatig te committen.
             small = id_lijst[i:i+1000]
             insert_article(small,conn)
             insert_term_articles(small,term,conn)
-            print("at: ",i)
+            print("at: ",i) #script wordt via commandline aangeroepen, printen om voortgang te zien
             conn.commit()
         
-        set_mined_variable(True,term,conn)
+        set_mined_variable(True,term,conn)  #Variabele om aan te geven dat het klaar is, zodat als het tussentijds crasht (gebeurt wel eens) de data 
+                                            #nog consistent is.
       
     conn.close()
     print("finished")

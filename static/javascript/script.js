@@ -68,7 +68,7 @@ d3.json(abs_url, function(error, graph) {
     linkedByIndex[d.source.id + "," + d.target.id] = 1;
     });
 
-    function neighboring(a, b) {
+    function neighboring(a, b) { //helper functie
     return linkedByIndex[a.index + "," + b.index];
     }
     
@@ -94,11 +94,23 @@ function connTo(node) {
 	var g = d3.select("svg").select(".links").selectAll("line");
 	var pb10 = d3.select(".pb-10")
 	
-	if (selectedNodes.length > 0){
-	return 0
+	if (pb10.text() == "Here the node graph"){ //Als back to reset
+    	pb10.text("");
 	}
 	
-	pb10.text(node.id);
+   var pb10_array = pb10.text().split(',');
+   
+   if (!(pb10_array.includes(node.id))){
+   
+       pb10.text(pb10.text() + "," + node.id); //toevoegen van geklikte node aan tekst element
+       
+   }
+   
+   if( pb10.text().charAt(0) == ","){
+       pb10.text(pb10.text().substring(1)); //weghalen als begint met komma.
+   }
+
+	
 
 	var nodeDic = {}
 	nodeDic[node.id] = 1 //niet verwijderen zichzelf
@@ -151,7 +163,7 @@ function loadDoc(lijst) {
 	
   var abs_url = "http://cytosine.nl/~owe8_pg1/Clickme.wsgi/getPMIDinfo"
 	
-  var xhttp = new XMLHttpRequest();
+  var xhttp = new XMLHttpRequest(); //AJAX!!
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
       
@@ -162,9 +174,9 @@ function loadDoc(lijst) {
     
     var arrayLength = lijst.length;
     
-    var var_str = "?0=" + lijst[0].id; 
+    var var_str = "?0=" + lijst[0].id;  //knippen plakken
     
-    for (var i = 1; i < arrayLength; i++) {
+    for (var i = 1; i < arrayLength; i++) { //uitbreidbaarheid overlap meerdere termen
         var_str += "&" + i + "=" + lijst[i].id
     }  
  
@@ -236,7 +248,7 @@ linez.each(function(d){
 
 }
 
-window.onload = function() {
+window.onload = function() { //toevoegen actionlistener voor knop die de grafiek herstelt
     document.getElementById("returnButton").onclick = function fun() {
         restore(); 
     }

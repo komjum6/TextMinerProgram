@@ -4,9 +4,20 @@
 
 Bestanden
 
-- pubmedRetrieval.py staat los van TextDataprocessing.py, dus er is een extra pythonbestand
-- De database uploaden en downloaden splitsen in aparte bestanden levert Ravioli code op en
-zorgt niet voor meer duidelijkheid.
+- PubmedRetrieval.py bevat de logica voor het ophalen van pubmed artikelen
+- Omdat besloten is de Textmining plaats te laten vinden via NCBI en de nadruk te leggen op de datamining 
+- Zit hierin ook de logica die origineel bedoelt was om te zitten in Textprocessing, dit om ravioli code [anti pattern] te voorkomen.
+
+- Keywords, Article en pubmed_query hebben geen bestaansrecht, Keywords zitten bij veel artikelen niet,
+- de Articles zijn eigenlijk niks meer dan platte bestanden en Biopython bevat een zeer toereikende methode om deze volledig te kunnen zien
+- een pubmed_query is feitelijk alleen een String en bioPython bevat deze functionaliteit ook.
+
+- De website heet TextMiner.py, omdat "Website" een onduidelijke naamgeving is
+- de Database_Connector heet database, dit om een simpele leesbare naam te geven
+- Deze database bevat zowel de functionaliteit voor uploaden en downloaden aangezien deze vaak door elkaar nodig zijn,
+- e.g voor het controleren welke artikelen nog van titel moeten worden voorzien, en 2 zeer nouw verbonden classes die elkaar aanroepen
+- zorgt alleen voor onduidelijkheid en moeilijk begrijpbare code.
+
 Packages
 
 -pubchempy werd gebruikt als package. Dit was gedaan om te zoeken naar naar compounds, maar het duurde te lang om veel compunds te zoeken en is dus verwijderd.
@@ -14,6 +25,7 @@ Packages
 Ook wordt de feature niet meer gesupport door ons omdat het cross-browser zou moeten worden gemaakt met if statements of een alternatieve manier die we nou dus niet uit gaan zoeken. De officiele API wordt gebruikt.
 - Geen gebruik meer van matplotlib in textdataprocessing. Hier is voor gekozen omdat het niet nodig bleek te zijn voor de applicatie
 -NLTK wordt zelfs niet meer gebruikt om het zo snel mogelijk te laten runnen maar dit bleek door hardware limitaties ook niet realistisch te zijn
+-Zonder anderen in de weg te zitten.
 
 
 Database
@@ -23,11 +35,17 @@ queries zo te schrijven dat alle combinaties tussen de tabellen, e.g compounds<-
 ook exact dezelfde waarden bevaten (Name) is ervoor gekozen om deze tabellen samen te voegen, verder is gekozen een ID toe te voegen omdat de many-many tabel extreem
 groot zou worden als heel pubmed gemined zou worden, wat achteraf te hoopvol was en problemen oplevert bij de verwerking van de data in een reele tijd.
 
-Tabellen toegevoegd:
+De keywords worden niet opgeslagen omdat veel artikelen deze niet bevatten en feitelijk niks toevoegen aan het functioneren, en het opslaan van grote
+Strings is niet voordelig voor de snelheid van het programma en de lightweight-ness die we belangrijk vonden
+De volledige abstracten opslaan neemt ook onnodig veel data in beslag en zorgt niet voor significante voordelen aangezien
+de abstracten inconsistent zijn qua weergave en beter bekeken kunnen worden op pubmed zelf.
+Alleen als de textmining lokaal gedaan zou worden zou deze een bestaansrecht krijgen en dan zou deze makkelijk toe te voegen zijn.
+
+Tabellen toegevoegd /samenvoeging:
 term_type: voor het aangeven van welk van de 3 type's het is van compound/health benefit/crop
 term: voor de namen van compound/health benefit/crop die in de graph op de website gevisualiseert worden
-articles: hierin worden de pubmed ID's opgeslagen
-articles_terms: hierin worden de pubmed ID's opgeslagen
+articles: hierin worden de pubmed ID's opgeslagen en de Titels
+articles_terms: tussentabel, hierin worden de pubmed ID's opgeslagen gelinkt aan de corresponderende terms
 
 Tabellen verwijderd:
 Abstracten
@@ -38,7 +56,9 @@ abstracten_has_health_Benefit
 abstracten_has_compound
 abstracten_has_crop
 
-Known Bugs:
-het genereren van de json kost veel tijd omdat de query hiervoor over een te grote tabel gaat, dit kan gefixed worden door deze query te herschrijven zodat alleen een subset van de data verwerkt hoeft te worden
-e.g alleen artikelen die een relatie hebben met "momordica charantia"  en "yams" door hier bijvoorbeeld een view voor aan te leggen.
-De query bevat een self join en 4 INNER JOINS welke allemaal nodig zijn om de overlappende artikelen te bepalen en de bijbehorende termen en term_types.
+Known Bugs/possible improvements:
+
+De waarde tussen het zoeken op exacte strings zoals "Sugars" of op stoffen die in de delen zijn in de familie "Sugars" is een lastige
+Enerzijds is het interesant om te weten of het woord "Sugar(s)" in een artikel staat, maar aan de andere kant loop je tegen het probleem
+dat er geen echt goed/fout is voor abstracten, dus soms mensen kiezen om een leesbaarder woord te gebruiken boven de wetenschappelijke naam in 
+het abstract om de aandacht te trekken (o.i.d) of juist een heel specifieke, terwijl ze het toch over de term waar interesse voor is hebben.

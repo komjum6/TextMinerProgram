@@ -5,6 +5,7 @@ Created on Mon Jun  4 17:47:33 2018
 @author: Huub
 """
 import mysql.connector
+from pubmedRetrieval import get_titels
 
 #het aanmaken van de connectie wordt hier gedaan, omdat dit een vrij hardcoded process is en
 #misschien aangepast moet worden
@@ -38,7 +39,9 @@ def insert_term_articles(id_lijst, term, cnx):
    
     cursor.executemany(stmt, data)
     
-    
+#Het instellen van de BOOLEAN om aan te geven dat een term volledig gemined is,
+#Dit zodat de database consistent blijft omdat de transacties in batches van 1000 gaan, en
+#als tussen 2 batches in het crasht er dus maar deels data ingevoert is, zonder te kunnen controleren waarom.
 def set_mined_variable(boolean,mesh_term,cnx):
     
     update_query = """
@@ -56,6 +59,7 @@ def set_mined_variable(boolean,mesh_term,cnx):
 
     
 #vind alle termen die nog niet gemined zijn
+#Met een simpele SELECT
 def get_unmined_terms(cnx):
     
     
@@ -71,12 +75,15 @@ def get_unmined_terms(cnx):
     
     rows = cursor.fetchall()
     
-    for row in rows:
+    for row in rows: #Mooie lijst maken zonder diepte
         terms.append(row[0])
     
     cursor.close()
     return terms
 
+
+#Alle pubmed ID's ophalen waarbij de titel NULL is, zodat deze maar een keer hoeven
+#te worden geinserteerd en de strain op de database zo klein mogelijk blijft
 def get_article_pmids(cnx):
     
     pmid_list = []
@@ -97,7 +104,12 @@ def get_article_pmids(cnx):
     cursor.close()
     return pmid_list
 
-
+#Functie voor het bepalen van de overlap tussen 2 termen
+#Hiervoor is een self-join nodig varn articles_terms, met zichzelf om alle artikelen te vinden
+#Waarin 2 verschillende termen voorkomen
+#En daarna zijn nog voor beide termen 2 extra joins nodig om de namen erbij te halen en niet alleen de identifiers
+#doordat de key een arbitrair ID is
+#En daarna nog een extra join voor het krijgen van de titels van de artikelen
 def get_overlap_pmid_title(term1,term2,cnx):
     
     sel_query = """
@@ -121,6 +133,28 @@ def get_overlap_pmid_title(term1,term2,cnx):
     
     return id_lijst
     
+#functie die aan de database opvraagt welke artikelen er nog geen title hebben
+#En daarna alleen deze artikelen voorziet van een titel, dit om redundant ophalen van data
+#te verkomen.
+def fill_article_titles():
+    conn = get_conn()
+    
+    pmid_list = get_article_pmids(conn)
+    
+    insert_list = get_titels(pmid_list)
+    
+    cursor = conn.cursor()
+    
+    update_query = """
+                    UPDATE articles
+                    SET title=%s
+                    WHERE PMID = %s
+                    """
+    
+    cursor.executemany(update_query,insert_list)
+    conn.commit()
+    cursor.close()
+    print("finished inserting article titles")
 
 # het inserteren van terms in de database
 # Deze functie was bedoeld om te ondersteunen dat de gebruiker dingen in de database kan inserteren voor latere verwerking

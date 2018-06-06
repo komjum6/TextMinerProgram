@@ -1,51 +1,50 @@
 from flask import Flask, render_template, request
 import json
 import mysql.connector
-import traceback
 import database
 from pubmedRetrieval import search_domain
 
 app = Flask(__name__)
 
-#De Root Map
+#De Root Map, simpele index.html
 @app.route('/')
 def index():
     return render_template('index.html')
     
 #De plaats waar alles gevisualiseerd word
+#Een groot deel van de daatwerkelijke functionaliteit zit in de javascript
+#Flask is er eigenlijk alleen voor portability en om te callen met javascript
 @app.route('/visualisation')
 def visualisation():
     return render_template('visualisation.html')
 
-#De plaats voor contact info
+#De plaats voor contact info, een simpele contact.html
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
 
-#Een plaats voor een introductie etc
+#Een plaats voor een introductie etc, simpele about.html
 @app.route('/about')
 def about():
     return render_template('about.html')
 
-#error 500 handling
+#error 500 handling 
+#Dit zou nooit moeten voorkomen, en retourneert de error als String, met een vriendelijk berichtje.
 @app.errorhandler(500)
 def internal_error(error):
-
-    tbo = error.__traceback__
-    tb = traceback.extract_tb(tbo)
     
-    return str(error) +">>" + str(tb)
+    return "Please report this error message: " + str(error)
 
 #error 404 handling
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template('page_not_found.html'), 404
 	
-#Functie waar je ongein instouwt om een coole grafiek te kunnen genereren, potentieel AJAX
-
 #Functie waar je ongein instouwt om een coole grafiek te kunnen genereren,
 #Momenteel slaat deze het op in een data.json bestand omdat het uitvoeren van deze taak 
-#Zeer CPU intensief is en daarom het liefst zo min mogelijk gerunt dient te worden
+#Potentieel zeer CPU intensief mits de database groot genoeg is door een gigantische selfjoin
+#Of de SQL server belasten of Python belasten was de keuze.
+#Niet bedoeld voor aanroepen gebruiker.
 @app.route('/jsonstoreurl', methods = ['GET'])
 def jsonstoreurl():
     
@@ -57,17 +56,18 @@ def jsonstoreurl():
     dic = {}
     thickest = 1 #voor het bepalen van lijn diktes
     
-    dic["nodes"] = []
-    dic["links"] = []
+    dic["nodes"] = [] #de nodes
+    dic["links"] = [] #de links
     
     cursor = cnx.cursor()
         
-        #overly intesive, moet geoptimaliseerd worden.
-        #Omdat we elk artikel opvragen dat er mee te maken hebben en niet duidelijk genoeg gedefineert hebben dat het per se
-        #iets te maken moet hebben met yams of bitter gourds, is de tussentabel gigantisch waardoor hij zeer sloom is
-        #alle 6 de inner joins zijn nodig, maar de self join is gewoon zeer pittig om uit te voeren door het formaat van deze tabel
-        #Om dit sneller te krijgen zou het beste eerst een query uitgevoert kunnen worden die alle artikelen ophaalt die iets te maken hebben
-        #met de planten van interesse: Bitter gourd en Yam, maar de afgelopen dagen was cytosine te instabiel om goed te testen.
+        #Omdat het domein beperkt is tot de ongeveer ~2200 as of juni 2018 artikelen
+        #Is deze query zeer snel en er is geprobeert door het aanleggen van verschillende
+        #indexes om de Query sneller te laten verlopen door de opties die de 
+        #Query analyser heeft te vergroten.
+        #In essentie precies hetzelfde als de functie voor het ophalen van de informatie uit de links
+        #Tussen twee artikelen, de data wordt zo compact opgeslagen,
+        #Zodat de server niet hapert als er veel data verzonden wordt
     sel_query = """
                 SELECT COUNT( * ) , tt1.id, tt2.id, t1.mesh_term, t2.mesh_term
                 FROM term_type AS tt1
@@ -84,7 +84,7 @@ def jsonstoreurl():
     fetchall = cursor.fetchall()
     
     for a in fetchall:
-        dickie = {"source" : a[3] , "target" : a[4], "value" : int(a[0])} #aanmaken van alle lijnen
+        dickie = {"source" : a[3] , "target" : a[4], "value" : int(a[0])} #aanmaken van alle lijnen, term -> term, met als value de count(*)
         thickest = min(thickest,a[0])  
         
         node = {"id" : a[3], "group" : a[1]} #nodes van links
@@ -95,11 +95,11 @@ def jsonstoreurl():
         if node not in dic["nodes"]:
             dic["nodes"].append(node) 
         
-        dic["links"].append(dickie)
+        dic["links"].append(dickie) #daadwerkelijk toevoegen van de link
     
     
     
-    dic["thickest"] = thickest
+    dic["thickest"] = thickest #zodat de lijntjes relatief aan de aller dikste gemaakt kunnen worden
     cursor.close()
     cnx.close()
     
@@ -125,41 +125,51 @@ def add_header(r):
     return r
 
 
-
+#Functie voor het generen van een Tabel met pmid, titel van artikels en
+#Voor het hackishly genereren van een link naar pubmed met hierin een query 
+#Die ongeveer equivalent is aan de queries voor het verzamelen van de data
+#Dit om de betrouwbaarheid aan te kunnen tonen
+#Zodat de gebruiker niet de drang krijgt handmatig te controleren of
+#de gevonden resultaten betrouwbaar zijn.
 @app.route('/getPMIDinfo', methods=['GET'])
 def getPMIDinfo():
     
     try:
-        req_dic = request.args.to_dict()
-        
-        
+        req_dic = request.args.to_dict() #verschillende argumenten, de naam van de variabelen is arbitrair
         
         values = []
         waarde = ""
         
-        for key in req_dic.keys():    
+        for key in req_dic.keys(): #pak alle termen.
             waarde = req_dic[key]
             values.append(waarde)
         
-        if len(values) > 1:
+        if len(values) > 1: #er moeten wel 2 termen zijn om een overlap te hebben
         
             cnx = database.get_conn()    
-            pmid_title_list = database.get_overlap_pmid_title(values[0],values[1],cnx)
+            pmid_title_list = database.get_overlap_pmid_title(values[0],values[1],cnx) #we gebruiken alleen de eerste 2 termen omdat dit simpeler is
+            cnx.close() #ZSM connectie sluiten zodat als het script gestopt wordt, die niet blijft hangen
             
             question = " AND ".join((values[0],values[1],))
             basic = search_domain() + " AND " + question
+              
             
-            cnx.close()        
-            terug = "<a href='https://www.ncbi.nlm.nih.gov/pubmed/?term={}' target='_blank'>{}</a>".format(basic,question)
-            terug = terug.replace("[","%5B").replace("]","%5D")
-            terug += "<br />"
+            terug = "<a href='https://www.ncbi.nlm.nih.gov/pubmed/?term={}' target='_blank'>{}</a>".format(basic,question) #leuke link naar pubmed, want <3 pubmed
+            terug = terug.replace("[","%5B").replace("]","%5D") #haakjes enzo door HTML troep vervangen
+            
+            table = "<table><tr><th>Pubmed link</th><th>Saveable link to table</th></tr>" #table headers
+            link = "<a href='{}' target='_blank'>Saveable overlap</a>".format(str(request.url)) #de link naar alleen de return zodat dit later opgevraagt kan worden of zelfs gebookmarkt kan worden
+            table += "<tr><td>{}</td><td>{}</td></tr>".format(terug,link) #de row met de inhoudt voor de table
+            terug = table + "</table>"
+            
+            terug += "<br /><br />"
             terug += "<table>"
             terug += "<tr><th>Pubmed ID</th><th>Title</th></tr>"
             
-            for pmid,title in pmid_title_list:
+            for pmid,title in pmid_title_list: #loopen over de pmids/titles en TR's van maken
                 terug += "<tr>"
                 
-                terug += "<td>{}</td><td><a href='https://www.ncbi.nlm.nih.gov/pubmed/{}' target='_blank'>{}</a></td>".format(str(pmid),str(pmid), title.encode('utf-8'))
+                terug += "<td>{}</td><td><a href='https://www.ncbi.nlm.nih.gov/pubmed/{}' target='_blank'>{}</a></td>".format(str(pmid),str(pmid), title.encode('utf-8')) #UTF-8 want unicode, pubmed linkjes bevatten gewoon het pubmedID, super chill.
                 
                 terug += "</tr>"
               
@@ -167,6 +177,6 @@ def getPMIDinfo():
             return terug
             
         else:
-            return "ERROR"
+            return "ERROR" #Debug code.
     except Exception as e:
         return str(e)
