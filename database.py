@@ -5,7 +5,7 @@ Created on Mon Jun  4 17:47:33 2018
 @author: Huub
 """
 import mysql.connector
-from pubmedRetrieval import get_titels
+from Bio import Entrez
 
 #het aanmaken van de connectie wordt hier gedaan, omdat dit een vrij hardcoded process is en
 #misschien aangepast moet worden
@@ -17,6 +17,25 @@ def get_conn():
                                   host='127.0.0.1',
                                   db='owe8_pg1')
     return cnx
+
+#Functie voor het ophalen van titels uit NCBI aan de hand van de lijst met ID's die meegelevert wordt
+#gebruikt de esummary functionaliteit van NCBI  -> https://www.ncbi.nlm.nih.gov/books/NBK25499/#_chapter4_ESummary_
+#Dit omdat hierbij niet alle XML data of Medline of iets dergelijks opgehaalt hoeft te worden en het download/uploaden minder
+#last oplevert voor andere gebruikers.
+def get_titels(id_lijst):
+    
+    pmid_title_list = []
+    id_string_lijst = [str(i) for i in id_lijst]
+    
+    handle = Entrez.esummary(db="pubmed", id=",".join(id_string_lijst), retmode="xml")
+    records = Entrez.parse(handle)
+    for i,record in enumerate(records):
+        ids = id_lijst[i]
+        title = record['Title'].encode('utf-8')
+        
+        pmid_title_list.append((title,ids))
+        
+    return pmid_title_list
 
 #Functie voor het inserteren van term artikel combinaties
 #een lijst met id's gaat erin en een term

@@ -64,25 +64,6 @@ def search_ids(query):
     print(len(id_lijst))
     return id_lijst   
 
-#Functie voor het ophalen van titels uit de database aan de hand van de lijst met ID's die meegelevert wordt
-#gebruikt de esummary functionaliteit van NCBI  -> https://www.ncbi.nlm.nih.gov/books/NBK25499/#_chapter4_ESummary_
-#Dit omdat hierbij niet alle XML data of Medline of iets dergelijks opgehaalt hoeft te worden en het download/uploaden minder
-#last oplevert voor andere gebruikers.
-def get_titels(id_lijst):
-    
-    pmid_title_list = []
-    id_string_lijst = [str(i) for i in id_lijst]
-    
-    handle = Entrez.esummary(db="pubmed", id=",".join(id_string_lijst), retmode="xml")
-    records = Entrez.parse(handle)
-    for i,record in enumerate(records):
-        ids = id_lijst[i]
-        title = record['Title'].encode('utf-8')
-        
-        pmid_title_list.append((title,ids))
-        
-    return pmid_title_list
-
 #Functie voor het vinden van alle artikelen die iets te maken hebben met de zoekterm en 
 #deze op te slaan in de database, hij is voor de aanroep van een developer omdat bij het halverwege misgaan van deze functie
 #door omstandigheden de database niet meer stabiel is, dit omdat het committen van zoveel veranderingen tegelijk de server voor een verlengde
